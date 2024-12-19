@@ -20,6 +20,9 @@
       "net.conczin.immersive_optimization.ImmersiveOptimization"
     ]
   },
+  "modmenu": [
+    "immersive_aircraft.config.ModMenuIntegration"
+  ],
   "mixins": [
     "${mod_id}.mixins.json"
   ],
