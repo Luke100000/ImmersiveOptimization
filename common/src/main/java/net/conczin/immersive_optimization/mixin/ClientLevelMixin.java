@@ -1,7 +1,9 @@
 package net.conczin.immersive_optimization.mixin;
 
 import net.conczin.immersive_optimization.TickScheduler;
+import net.conczin.immersive_optimization.config.Config;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.Options;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
@@ -32,6 +34,11 @@ public abstract class ClientLevelMixin extends Level {
 
     @Inject(method = "tickEntities()V", at = @At("HEAD"))
     private void immersiveOptimization$onTickEntities(CallbackInfo ci) {
+        if (Config.getInstance().autoAdjustBudgetOnFPSCap) {
+            Options options = Minecraft.getInstance().options;
+            int targetFPS = options.enableVsync().get() ? 60 : Math.min(240, options.framerateLimit().get());
+            Config.getInstance().entityTickBudgetClient = 600.0 / targetFPS;
+        }
         TickScheduler.INSTANCE.isLocalServer = Minecraft.getInstance().isLocalServer();
         TickScheduler.INSTANCE.prepare(true);
         TickScheduler.INSTANCE.prepareLevel(this, tickingEntities);

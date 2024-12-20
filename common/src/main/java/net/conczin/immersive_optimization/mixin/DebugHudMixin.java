@@ -18,7 +18,7 @@ public class DebugHudMixin {
         ClientLevel level = Minecraft.getInstance().level;
         if (level != null) {
             TickScheduler.LevelData data = TickScheduler.INSTANCE.getLevelData(level);
-            info.getReturnValue().add("[Immersive Optimization] Average tick rate %2.1f%%, %d current, %d total stressed ticks.".formatted(data.averageSmoothedTickRate * 100, data.stressedTicks, data.lifeTimeStressedTicks));
+            info.getReturnValue().add("[Immersive Optimization] Rate %2.1f%%, %d current stress, %d + %d (budget) total".formatted(data.averageSmoothedTickRate * 100, data.stressedTicks, data.lifeTimeStressedTicks, data.lifeTimeBudgetTicks));
         }
     }
 }

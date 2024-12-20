@@ -35,6 +35,7 @@ public class TickScheduler {
 
         public int stressedTicks = 0;
         public int lifeTimeStressedTicks = 0;
+        public int lifeTimeBudgetTicks = 0;
 
         public double averageSmoothedTickRate = 0;
 
@@ -63,6 +64,7 @@ public class TickScheduler {
 
     public void reset() {
         levelData.clear();
+        frustum = null;
     }
 
     public void prepare(boolean client) {
@@ -77,8 +79,8 @@ public class TickScheduler {
         // And assign a budget to each level
         for (LevelData data : levelData.values()) {
             if (data.client == client) {
-                long budget = client ? Config.getInstance().entityTickBudgetClient : Config.getInstance().entityTickBudgetServer;
-                data.budget = budget * data.totalEntities / (totalEntities + 1);
+                double budget = client ? Config.getInstance().entityTickBudgetClient : Config.getInstance().entityTickBudgetServer;
+                data.budget = budget > 0 ? (long) (budget * data.totalEntities / (totalEntities + 1) + 1) : 0;
             }
         }
     }
@@ -100,7 +102,8 @@ public class TickScheduler {
         boolean stressed = stressedThreshold > 0 && server != null && server.getAverageTickTime() > stressedThreshold;
         if (data.outOfBudget || stressed) {
             data.stressedTicks++;
-            data.lifeTimeStressedTicks++;
+            if (stressed) data.lifeTimeStressedTicks++;
+            if (data.outOfBudget) data.lifeTimeBudgetTicks++;
             data.outOfBudget = false;
         } else {
             data.stressedTicks = Math.max(0, data.stressedTicks - 1);
@@ -152,14 +155,14 @@ public class TickScheduler {
             }
 
             // Check if we are still within budget
-            if (System.currentTimeMillis() - data.time > data.budget) {
+            if (data.budget > 0 && System.currentTimeMillis() - data.time > data.budget) {
                 data.outOfBudget = true;
             }
         }
 
         int stress = data.stressed.getOrDefault(entity.getId(), 0);
         if ((data.tick + entity.getId()) % Math.max(1, priority - stress) == 0) {
-            if (data.client) {
+            if (entity.level().isClientSide()) {
                 data.lastUpdates.put(entity.getId(), data.tick);
             }
 
@@ -174,13 +177,16 @@ public class TickScheduler {
     }
 
     public boolean shouldTick(Level level, long pos) {
+        if (!Config.getInstance().enableBlockEntities) {
+            return true;
+        }
         LevelData data = getLevelData(level);
         int priority = data.blockEntityPriorities.computeIfAbsent(pos, p -> this.getBlockEntityPriority(level, p));
         return priority < 1 || (level.getGameTime() + pos) % priority == 0;
     }
 
     public int getPriority(LevelData data, Level level, Entity entity) {
-        if (!Config.getInstance().enable) {
+        if (!Config.getInstance().enableEntities) {
             return 0;
         }
 

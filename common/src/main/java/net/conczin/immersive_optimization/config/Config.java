@@ -5,10 +5,10 @@ import net.conczin.immersive_optimization.Constants;
 import java.util.Map;
 
 public final class Config extends JsonConfig {
-    private static final Config INSTANCE = loadOrCreate(new Config(Constants.MOD_ID), Config.class);
+    private static final Config INSTANCE = loadOrCreate(new Config(), Config.class);
 
-    public Config(String name) {
-        super(name);
+    public Config() {
+        super(Constants.MOD_ID);
     }
 
     public static Config getInstance() {
@@ -16,7 +16,8 @@ public final class Config extends JsonConfig {
     }
 
     // Enable the mod. If you plan to not use it altogether, uninstall it.
-    public boolean enable = true;
+    public boolean enableEntities = true;
+    public boolean enableBlockEntities = true;
 
     // Occlusion culling highly improves visual quality by prioritizing visible entities.
     public boolean enableOcclusionCulling = true;
@@ -29,20 +30,24 @@ public final class Config extends JsonConfig {
     // Every blocksPerLevel, the tick rate will be reduced by 1, offset by initial minDistance to avoid visible glitches.
     // Smaller values increase server performance.
     // Theoretically it is safe to increase this to large values like 100, then rely on the stressed mechanic below only.
-    public int minDistance = 12;
+    public int minDistance = 16;
     public int blocksPerLevel = 24;
-    public int blocksPerLevelOcclusionCulled = 6;
-    public int blocksPerLevelViewportCulled = 12;
+    public int blocksPerLevelViewportCulled = 16;
+    public int blocksPerLevelOcclusionCulled = 12;
     public int maxLevel = 20;
 
     // When the budget is exceeded, the server will skip all remaining entities, and prioritize them next tick.
     // This math may is slightly biased towards the end of the list.
-    public int entityTickBudgetServer = 30;
-    public int entityTickBudgetClient = 10;
+    // 0 to turn off.
+    // autoAdjustBudgetOnFPSCap will override the client cap to prioritize smooth FPS.
+    public double entityTickBudgetServer = 30;
+    public double entityTickBudgetClient = 10;
+    public boolean autoAdjustBudgetOnFPSCap = true;
 
     // The ms of total server tick time before the server is considered stressed.
     // When stressed, the server will gradually increase the blockedPerLevel.
     // This may increase visual glitches with clients and is a last resort to avoid lag.
+    // 0 to turn off.
     public int stressedThreshold = 45;
 
     // Set to "false" to disable scheduling on given dimensions.
