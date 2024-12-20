@@ -10,7 +10,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.entity.EntityTickList;
-import net.minecraft.world.level.levelgen.Heightmap;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,7 +26,7 @@ public class TickScheduler {
 
         public long time = 0;
         public long tick = 0;
-        public long budget = 1000;
+        public long budget = 50_000_000;
         public boolean outOfBudget = false;
 
         public double totalTickRate = 0;
@@ -80,7 +79,7 @@ public class TickScheduler {
         for (LevelData data : levelData.values()) {
             if (data.client == client) {
                 double budget = client ? Config.getInstance().entityTickBudgetClient : Config.getInstance().entityTickBudgetServer;
-                data.budget = budget > 0 ? (long) (budget * data.totalEntities / (totalEntities + 1) + 1) : 0;
+                data.budget = budget > 0 ? (long) (budget * data.totalEntities / (totalEntities + 1) * 1_000_000) : 0;
             }
         }
     }
@@ -93,7 +92,7 @@ public class TickScheduler {
             return;
         }
 
-        data.time = System.currentTimeMillis();
+        data.time = System.nanoTime();
         data.tick = level.getGameTime();
 
         // Update level stress status
@@ -155,7 +154,7 @@ public class TickScheduler {
             }
 
             // Check if we are still within budget
-            if (data.budget > 0 && System.currentTimeMillis() - data.time > data.budget) {
+            if (data.budget > 0 && System.nanoTime() - data.time > data.budget) {
                 data.outOfBudget = true;
             }
         }
@@ -208,12 +207,16 @@ public class TickScheduler {
             }
         }
 
-        // Culling (Only single player or client world)
         int blocksPerLevel = Config.getInstance().blocksPerLevel;
+
         // TODO: Implement occlusion culling
+
+        // View distance culling
         if (Config.getInstance().enableDistanceCulling && !entity.shouldRenderAtSqrDistance(closestPlayer)) {
             blocksPerLevel = Math.min(blocksPerLevel, Config.getInstance().blocksPerLevelDistanceCulled);
         }
+
+        // Frustum culling (Only single player or client world)
         if (Config.getInstance().enableViewportCulling &&
             (data.client || level.players().size() == 1)
             && frustum != null

@@ -22,7 +22,7 @@ public class Commands {
                             StringBuilder sb = new StringBuilder();
                             sb.append("§l§a[Immersive Optimization Report]§r\n");
                             i.levelData.forEach((key, data) ->
-                                    sb.append(" %s: Rate: %.1f%%, %d stress, %d budgeted\n".formatted(
+                                    sb.append("%s Rate: %.1f%%, %d stress, %d budgeted\n".formatted(
                                             new ResourceLocation(key).getPath(),
                                             data.averageSmoothedTickRate * 100,
                                             data.lifeTimeStressedTicks,
@@ -34,7 +34,12 @@ public class Commands {
                 )
                 .then(LiteralArgumentBuilder.<CommandSourceStack>literal("profiler")
                         .executes(context -> {
-                            send(context, "A table of the top 10 most expensive entities will be shown here.");
+                            StringBuilder sb = new StringBuilder();
+                            sb.append("§l§a[Immersive Optimization Profiler]§r\n");
+                            EntityProfiler.SERVER.getTopEntities(8).forEach(data ->
+                                    sb.append("%s %d * %2.1fns = %2.1fms\n".formatted(data.name, data.getSamples(), data.getAverage(), data.getTime() / 1_000_000.0))
+                            );
+                            send(context, sb.toString());
                             return 0;
                         })
                 )
