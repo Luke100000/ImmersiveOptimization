@@ -45,6 +45,7 @@ public class Commands {
                                             Config c = Config.getInstance();
                                             c.minDistance = 10;
                                             c.blocksPerLevel = 16;
+                                            c.blocksPerLevelDistanceCulled = 12;
                                             c.blocksPerLevelViewportCulled = 12;
                                             c.blocksPerLevelOcclusionCulled = 8;
                                             c.maxLevel = 40;
@@ -56,6 +57,7 @@ public class Commands {
                                             Config c = Config.getInstance();
                                             c.minDistance = 16;
                                             c.blocksPerLevel = 24;
+                                            c.blocksPerLevelDistanceCulled = 16;
                                             c.blocksPerLevelViewportCulled = 16;
                                             c.blocksPerLevelOcclusionCulled = 12;
                                             c.maxLevel = 20;
@@ -67,6 +69,7 @@ public class Commands {
                                             Config c = Config.getInstance();
                                             c.minDistance = 24;
                                             c.blocksPerLevel = 24;
+                                            c.blocksPerLevelDistanceCulled = 20;
                                             c.blocksPerLevelViewportCulled = 20;
                                             c.blocksPerLevelOcclusionCulled = 16;
                                             c.maxLevel = 10;
@@ -76,6 +79,7 @@ public class Commands {
                         )
                         .then(toggle("enableEntities", enabled -> Config.getInstance().enableEntities = enabled))
                         .then(toggle("enableBlockEntities", enabled -> Config.getInstance().enableBlockEntities = enabled))
+                        .then(toggle("enableDistanceCulling", enabled -> Config.getInstance().enableDistanceCulling = enabled))
                         .then(toggle("enableOcclusionCulling", enabled -> Config.getInstance().enableOcclusionCulling = enabled))
                         .then(toggle("enableViewportCulling", enabled -> Config.getInstance().enableViewportCulling = enabled))
                         .then(toggle("syncWithIntegratedServer", enabled -> Config.getInstance().syncWithIntegratedServer = enabled))

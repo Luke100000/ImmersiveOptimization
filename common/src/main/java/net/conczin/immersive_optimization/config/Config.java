@@ -19,8 +19,11 @@ public final class Config extends JsonConfig {
     public boolean enableEntities = true;
     public boolean enableBlockEntities = true;
 
+    // Distance culling reduces the tick rate of entities when not visible due to distance.
+    public boolean enableDistanceCulling = true;
     // Occlusion culling highly improves visual quality by prioritizing visible entities.
     public boolean enableOcclusionCulling = true;
+    // Viewport culling slows down entities when outside the camera perspective.
     public boolean enableViewportCulling = true;
 
     // Sync the tick rate with the integrated server (if playing single player).
@@ -32,7 +35,8 @@ public final class Config extends JsonConfig {
     // Theoretically it is safe to increase this to large values like 100, then rely on the stressed mechanic below only.
     public int minDistance = 16;
     public int blocksPerLevel = 24;
-    public int blocksPerLevelViewportCulled = 16;
+    public int blocksPerLevelDistanceCulled = 12;
+    public int blocksPerLevelViewportCulled = 20;
     public int blocksPerLevelOcclusionCulled = 12;
     public int maxLevel = 20;
 

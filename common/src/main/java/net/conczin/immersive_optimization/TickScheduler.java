@@ -110,7 +110,7 @@ public class TickScheduler {
         }
 
         if (data.tick % 20 == 0 && data.totalEntities > 0) {
-            data.averageSmoothedTickRate = data.averageSmoothedTickRate * 0.9 + (data.totalTickRate / data.totalEntities) * 0.1;
+            data.averageSmoothedTickRate = data.averageSmoothedTickRate * 0.9 + data.totalTickRate / data.totalEntities * 0.1;
 
             data.totalTickRate = 0;
             data.totalEntities = 0;
@@ -199,10 +199,9 @@ public class TickScheduler {
         // Find the closest player
         double closestPlayer = Double.MAX_VALUE;
         for (Player player : level.players()) {
-            boolean underGround = player.getY() < level.getHeight(Heightmap.Types.WORLD_SURFACE, player.blockPosition().getX(), player.blockPosition().getZ()) - 5;
-            double dx = (player.getX() - entity.getX()) * (underGround ? 1.5 : 1.0);
-            double dy = (player.getY() - entity.getY()) * (underGround ? 1.5 : 2.0);
-            double dz = (player.getZ() - entity.getZ()) * (underGround ? 1.5 : 1.0);
+            double dx = player.getX() - entity.getX();
+            double dy = player.getY() - entity.getY();
+            double dz = player.getZ() - entity.getZ();
             double distance = dx * dx + dy * dy + dz * dz;
             if (distance < closestPlayer) {
                 closestPlayer = distance;
@@ -212,12 +211,14 @@ public class TickScheduler {
         // Culling (Only single player or client world)
         int blocksPerLevel = Config.getInstance().blocksPerLevel;
         // TODO: Implement occlusion culling
-        // if (Config.getInstance().enableOcclusionCulling) { }
+        if (Config.getInstance().enableDistanceCulling && !entity.shouldRenderAtSqrDistance(closestPlayer)) {
+            blocksPerLevel = Math.min(blocksPerLevel, Config.getInstance().blocksPerLevelDistanceCulled);
+        }
         if (Config.getInstance().enableViewportCulling &&
             (data.client || level.players().size() == 1)
             && frustum != null
             && !frustum.isVisible(entity.getBoundingBox())) {
-            blocksPerLevel = Config.getInstance().blocksPerLevelOcclusionCulled;
+            blocksPerLevel = Math.min(blocksPerLevel, Config.getInstance().blocksPerLevelViewportCulled);
         }
 
         // Assign an optimization level
