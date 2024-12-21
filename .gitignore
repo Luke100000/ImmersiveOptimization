@@ -21,3 +21,7 @@ build
 # other
 eclipse
 run
+
+# raw resources
+*.kra
+*~

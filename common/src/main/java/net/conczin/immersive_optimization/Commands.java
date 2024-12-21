@@ -10,6 +10,7 @@ import net.conczin.immersive_optimization.config.Config;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
 
@@ -22,9 +23,9 @@ public class Commands {
                             StringBuilder sb = new StringBuilder();
                             sb.append("§l§a[Immersive Optimization Report]§r\n");
                             i.levelData.forEach((key, data) ->
-                                    sb.append("%s Rate: %.1f%%, %d stress, %d budgeted\n".formatted(
+                                    sb.append("%s rate: %.1f%%, %d stress, %d budgeted\n".formatted(
                                             new ResourceLocation(key).getPath(),
-                                            data.averageSmoothedTickRate * 100,
+                                            data.totalTickRate / data.totalEntities * 100,
                                             data.lifeTimeStressedTicks,
                                             data.lifeTimeBudgetTicks
                                     )));
@@ -36,9 +37,11 @@ public class Commands {
                         .executes(context -> {
                             StringBuilder sb = new StringBuilder();
                             sb.append("§l§a[Immersive Optimization Profiler]§r\n");
-                            EntityProfiler.SERVER.getTopEntities(8).forEach(data ->
-                                    sb.append("%s %d * %2.1fns = %2.1fms\n".formatted(data.name, data.getSamples(), data.getAverage(), data.getTime() / 1_000_000.0))
-                            );
+                            EntityProfiler.SERVER.getTopEntities(8).forEach(data -> sb.append(formatProfilerData(data)));
+                            if (EntityProfiler.CLIENT.tick > 0) {
+                                sb.append("§l§a[Client]§r\n");
+                                EntityProfiler.CLIENT.getTopEntities(8).forEach(data -> sb.append(formatProfilerData(data)));
+                            }
                             send(context, sb.toString());
                             return 0;
                         })
@@ -48,9 +51,9 @@ public class Commands {
                                 .then(LiteralArgumentBuilder.<CommandSourceStack>literal("performance")
                                         .executes(context -> {
                                             Config c = Config.getInstance();
-                                            c.minDistance = 10;
+                                            c.minDistance = 6;
                                             c.blocksPerLevel = 16;
-                                            c.blocksPerLevelDistanceCulled = 12;
+                                            c.blocksPerLevelDistanceCulled = 6;
                                             c.blocksPerLevelViewportCulled = 12;
                                             c.blocksPerLevelOcclusionCulled = 8;
                                             c.maxLevel = 40;
@@ -60,10 +63,10 @@ public class Commands {
                                 .then(LiteralArgumentBuilder.<CommandSourceStack>literal("default")
                                         .executes(context -> {
                                             Config c = Config.getInstance();
-                                            c.minDistance = 16;
+                                            c.minDistance = 8;
                                             c.blocksPerLevel = 24;
-                                            c.blocksPerLevelDistanceCulled = 16;
-                                            c.blocksPerLevelViewportCulled = 16;
+                                            c.blocksPerLevelDistanceCulled = 8;
+                                            c.blocksPerLevelViewportCulled = 20;
                                             c.blocksPerLevelOcclusionCulled = 12;
                                             c.maxLevel = 20;
                                             return 0;
@@ -72,11 +75,11 @@ public class Commands {
                                 .then(LiteralArgumentBuilder.<CommandSourceStack>literal("quality")
                                         .executes(context -> {
                                             Config c = Config.getInstance();
-                                            c.minDistance = 24;
-                                            c.blocksPerLevel = 24;
-                                            c.blocksPerLevelDistanceCulled = 20;
-                                            c.blocksPerLevelViewportCulled = 20;
-                                            c.blocksPerLevelOcclusionCulled = 16;
+                                            c.minDistance = 12;
+                                            c.blocksPerLevel = 30;
+                                            c.blocksPerLevelDistanceCulled = 10;
+                                            c.blocksPerLevelViewportCulled = 25;
+                                            c.blocksPerLevelOcclusionCulled = 15;
                                             c.maxLevel = 10;
                                             return 0;
                                         })
@@ -91,6 +94,16 @@ public class Commands {
                         .then(toggle("enableBudget", enabled -> Config.getInstance().entityTickBudgetServer = enabled ? (new Config()).entityTickBudgetServer : 0))
                         .then(toggle("enabledStress", enabled -> Config.getInstance().stressedThreshold = enabled ? (new Config()).stressedThreshold : 0))
                 )
+        );
+    }
+
+    private static @NotNull String formatProfilerData(EntityProfiler.EntityData data) {
+        return "%s %d * %2.1fns = %2.1fms, %2.1fms max\n".formatted(
+                data.name,
+                data.getSamples(),
+                data.getAverage(),
+                data.getTime() / 1_000_000.0,
+                data.max / 1_000_000.0
         );
     }
 

@@ -28,7 +28,11 @@ public abstract class LevelMixin {
 
     @Inject(method = "guardEntityTick(Ljava/util/function/Consumer;Lnet/minecraft/world/entity/Entity;)V", at = @At("RETURN"))
     public <T extends Entity> void immersiveOptimization$guardEntityTickEnd(Consumer<T> $$0, T $$1, CallbackInfo ci) {
-        EntityProfiler.SERVER.logEntity($$1, System.nanoTime() - immersiveOptimization$time);
+        if ($$1.level().isClientSide()) {
+            EntityProfiler.CLIENT.logEntity($$1, System.nanoTime() - immersiveOptimization$time);
+        } else {
+            EntityProfiler.SERVER.logEntity($$1, System.nanoTime() - immersiveOptimization$time);
+        }
     }
 
     @Inject(method = "shouldTickBlocksAt(J)Z", at = @At("HEAD"), cancellable = true)

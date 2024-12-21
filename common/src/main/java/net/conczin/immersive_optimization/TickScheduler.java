@@ -36,8 +36,6 @@ public class TickScheduler {
         public int lifeTimeStressedTicks = 0;
         public int lifeTimeBudgetTicks = 0;
 
-        public double averageSmoothedTickRate = 0;
-
         public Map<Integer, Long> lastUpdates = new ConcurrentHashMap<>();
         public Map<Integer, Integer> stressed = new ConcurrentHashMap<>();
         public Map<Integer, Integer> priorities = new ConcurrentHashMap<>();
@@ -109,8 +107,6 @@ public class TickScheduler {
         }
 
         if (data.tick % 20 == 0 && data.totalEntities > 0) {
-            data.averageSmoothedTickRate = data.averageSmoothedTickRate * 0.9 + data.totalTickRate / data.totalEntities * 0.1;
-
             data.totalTickRate = 0;
             data.totalEntities = 0;
         }
@@ -140,7 +136,7 @@ public class TickScheduler {
         LevelData data = getLevelData(entity.level());
 
         int priority = data.priorities.getOrDefault(entity.getId(), 0);
-        if (priority <= 0) {
+        if (priority <= 1) {
             return true;
         }
 

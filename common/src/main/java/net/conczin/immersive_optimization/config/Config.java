@@ -33,9 +33,9 @@ public final class Config extends JsonConfig {
     // Every blocksPerLevel, the tick rate will be reduced by 1, offset by initial minDistance to avoid visible glitches.
     // Smaller values increase server performance.
     // Theoretically it is safe to increase this to large values like 100, then only rely on the stressed mechanic below.
-    public int minDistance = 16;
+    public int minDistance = 8;
     public int blocksPerLevel = 24;
-    public int blocksPerLevelDistanceCulled = 12;
+    public int blocksPerLevelDistanceCulled = 8;
     public int blocksPerLevelViewportCulled = 20;
     public int blocksPerLevelOcclusionCulled = 12;
     public int maxLevel = 20;
