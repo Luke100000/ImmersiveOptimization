@@ -4,7 +4,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.conczin.immersive_optimization.TickScheduler;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
@@ -31,10 +30,6 @@ public class LevelRendererMixin {
             float delta = Math.max(0, entity.level().getGameTime() - last - 1);
             float oldTickTime = args.get(4);
             args.set(4, (delta + oldTickTime) / priority);
-
-            if (entity instanceof LivingEntity living && living.hurtTime > 0) {
-                System.out.println("Hurt time: " + living.getId() + "  " + delta + "   " + priority + "  " + (delta + oldTickTime) / priority);
-            }
         }
     }
 
