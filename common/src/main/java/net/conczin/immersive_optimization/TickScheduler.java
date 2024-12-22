@@ -11,11 +11,16 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.entity.EntityTickList;
 import net.minecraft.world.phys.AABB;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class TickScheduler {
-    public static TickScheduler INSTANCE = new TickScheduler();
+    public static final TickScheduler INSTANCE = new TickScheduler();
+
+    public static final int ENTITY_UPDATE_TIME_RANGE = 27;
+    public static final int CLEAR_BLOCK_ENTITIES_INTERVAL = 200;
+    public static final int CLEAR_ENTITIES_INTERVAL = 12000;
 
     public FrustumProxy frustum;
 
@@ -38,10 +43,10 @@ public class TickScheduler {
         public int lifeTimeStressedTicks = 0;
         public int lifeTimeBudgetTicks = 0;
 
-        public Map<Integer, Long> lastUpdates = new ConcurrentHashMap<>();
-        public Map<Integer, Integer> stressed = new ConcurrentHashMap<>();
-        public Map<Integer, Integer> priorities = new ConcurrentHashMap<>();
-        public Map<Long, Integer> blockEntityPriorities = new ConcurrentHashMap<>();
+        public Map<Integer, Integer> stressed = new HashMap<>();
+        public Map<Integer, Integer> priorities = new HashMap<>();
+
+        public Map<Long, Integer> blockEntityPriorities = new HashMap<>();
 
         public LevelData(String identifier) {
             active = Config.getInstance().dimensions.getOrDefault(identifier, true);
@@ -91,19 +96,24 @@ public class TickScheduler {
             data.stressedTicks = Math.max(0, data.stressedTicks - 1);
         }
 
-        if (data.tick % 20 == 0 && data.totalEntities > 0) {
+        if (data.tick % ENTITY_UPDATE_TIME_RANGE == 0 && data.totalEntities > 0) {
             data.totalTickRate = 0;
             data.totalEntities = 0;
         }
 
-        // Clear block entity priorities every 10 seconds
-        if (data.tick % 200 == 0) {
+        // Clear priorities every n seconds to avoid memory leaks
+        if (data.tick % CLEAR_ENTITIES_INTERVAL == 0) {
+            data.stressed.clear();
+            data.priorities.clear();
+            data.totalTickRate = 0;
+        }
+        if (data.tick % CLEAR_BLOCK_ENTITIES_INTERVAL == 0) {
             data.blockEntityPriorities.clear();
         }
 
-        // Update entity priorities (distributed over 20 ticks)
+        // Update entity priorities (distributed over n ticks)
         tickingEntities.forEach(entity -> {
-            if ((data.tick + entity.getId()) % 20 == 0) {
+            if ((data.tick + entity.getId()) % ENTITY_UPDATE_TIME_RANGE == 0) {
                 int priority = getPriority(data, level, entity);
                 if (priority > 0) {
                     data.priorities.put(entity.getId(), priority);
@@ -118,6 +128,10 @@ public class TickScheduler {
     }
 
     public boolean shouldTick(Entity entity) {
+        if (entity.noCulling) {
+            return true;
+        }
+
         LevelData data = getLevelData(entity.level());
 
         int priority = data.priorities.getOrDefault(entity.getId(), 0);
@@ -138,10 +152,6 @@ public class TickScheduler {
 
         int stress = data.stressed.getOrDefault(entity.getId(), 0);
         if ((data.tick + entity.getId()) % Math.max(1, priority - stress) == 0) {
-            if (entity.level().isClientSide()) {
-                data.lastUpdates.put(entity.getId(), data.tick);
-            }
-
             // Relax again
             if (stress > 0) {
                 data.stressed.put(entity.getId(), stress - 1);
