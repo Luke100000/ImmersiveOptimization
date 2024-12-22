@@ -18,11 +18,8 @@ public abstract class LevelMixin {
     @Unique
     private long immersiveOptimization$time = 0;
 
-    @Inject(method = "guardEntityTick(Ljava/util/function/Consumer;Lnet/minecraft/world/entity/Entity;)V", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "guardEntityTick(Ljava/util/function/Consumer;Lnet/minecraft/world/entity/Entity;)V", at = @At("HEAD"))
     public <T extends Entity> void immersiveOptimization$guardEntityTick(Consumer<T> $$0, T $$1, CallbackInfo ci) {
-        if (!TickScheduler.INSTANCE.shouldTick($$1)) {
-            ci.cancel();
-        }
         immersiveOptimization$time = System.nanoTime();
     }
 
@@ -36,8 +33,8 @@ public abstract class LevelMixin {
     }
 
     @Inject(method = "shouldTickBlocksAt(J)Z", at = @At("HEAD"), cancellable = true)
-    public void immersiveOptimization$shouldTickBlocksAt(long $$0, CallbackInfoReturnable<Boolean> cir) {
-        if (!TickScheduler.INSTANCE.shouldTick((Level) (Object) this, $$0)) {
+    public void immersiveOptimization$shouldTickBlocksAt(long pos, CallbackInfoReturnable<Boolean> cir) {
+        if (!TickScheduler.INSTANCE.shouldTick((Level) (Object) this, pos)) {
             cir.setReturnValue(false);
         }
     }

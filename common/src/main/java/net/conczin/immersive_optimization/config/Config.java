@@ -15,6 +15,11 @@ public final class Config extends JsonConfig {
         return INSTANCE;
     }
 
+    @Override
+    int getVersion() {
+        return 2;
+    }
+
     // Enable the mod. If you plan to not use it altogether, uninstall it.
     public boolean enableEntities = true;
     public boolean enableBlockEntities = true;
@@ -25,10 +30,6 @@ public final class Config extends JsonConfig {
     public boolean enableOcclusionCulling = true;
     // Viewport culling slows down entities when outside the camera perspective.
     public boolean enableViewportCulling = true;
-
-    // Sync the tick rate with the integrated server (if playing single player).
-    // This reduces some visual glitches and CPU overhead, and makes use of frustum culling (when #players <= 1).
-    public boolean syncWithIntegratedServer = true;
 
     // Every blocksPerLevel, the tick rate will be reduced by 1, offset by initial minDistance to avoid visible glitches.
     // Smaller values increase server performance.
@@ -43,10 +44,7 @@ public final class Config extends JsonConfig {
     // When the budget is exceeded, the server will skip all remaining entities, and prioritize them next tick.
     // This math may is slightly biased towards the end of the list.
     // 0 to turn off.
-    // autoAdjustBudgetOnFPSCap will override the client cap to prioritize smooth FPS.
-    public double entityTickBudgetServer = 30;
-    public double entityTickBudgetClient = 10;
-    public boolean autoAdjustBudgetOnFPSCap = true;
+    public double entityTickBudget = 30;
 
     // The ms of total server tick time before the server is considered stressed.
     // When stressed, the server will gradually increase the blockedPerLevel.

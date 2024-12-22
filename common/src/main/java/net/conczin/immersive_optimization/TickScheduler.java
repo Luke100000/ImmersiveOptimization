@@ -17,12 +17,10 @@ import java.util.concurrent.ConcurrentHashMap;
 public class TickScheduler {
     public static TickScheduler INSTANCE = new TickScheduler();
 
-    public boolean isLocalServer = false;
     public Frustum frustum;
 
     public static class LevelData {
         public boolean active;
-        public boolean client;
 
         public long time = 0;
         public long tick = 0;
@@ -49,14 +47,7 @@ public class TickScheduler {
     public final Map<String, LevelData> levelData = new ConcurrentHashMap<>();
 
     public LevelData getLevelData(Level level) {
-        // If possible link the client level to the server level to remove overhead
-        if (level.isClientSide && (!isLocalServer || !Config.getInstance().syncWithIntegratedServer)) {
-            LevelData data = levelData.computeIfAbsent("local", LevelData::new);
-            data.client = true;
-            return data;
-        } else {
-            return levelData.computeIfAbsent(level.dimension().location().toString(), LevelData::new);
-        }
+        return levelData.computeIfAbsent(level.dimension().location().toString(), LevelData::new);
     }
 
     public void reset() {
@@ -64,32 +55,22 @@ public class TickScheduler {
         frustum = null;
     }
 
-    public void prepare(boolean client) {
+    public void tick() {
         // Count total entities
         int totalEntities = 0;
         for (LevelData data : levelData.values()) {
-            if (data.client == client) {
-                totalEntities += data.totalEntities;
-            }
+            totalEntities += data.totalEntities;
         }
 
         // And assign a budget to each level
         for (LevelData data : levelData.values()) {
-            if (data.client == client) {
-                double budget = client ? Config.getInstance().entityTickBudgetClient : Config.getInstance().entityTickBudgetServer;
-                data.budget = budget > 0 ? (long) (budget * data.totalEntities / (totalEntities + 1) * 1_000_000) : 0;
-            }
+            double budget = Config.getInstance().entityTickBudget;
+            data.budget = budget > 0 ? (long) (budget * data.totalEntities / (totalEntities + 1) * 1_000_000) : 0;
         }
     }
 
     public void prepareLevel(Level level, EntityTickList tickingEntities) {
         LevelData data = getLevelData(level);
-
-        // Skip linked levels, the server will handle it
-        if (data.client != level.isClientSide) {
-            return;
-        }
-
         data.time = System.nanoTime();
         data.tick = level.getGameTime();
 
@@ -140,19 +121,15 @@ public class TickScheduler {
             return true;
         }
 
-        boolean notSynced = data.client == entity.level().isClientSide;
+        // No more resources, apply stress instead
+        if (data.outOfBudget) {
+            data.stressed.put(entity.getId(), data.stressed.getOrDefault(entity.getId(), 0) + 1);
+            return false;
+        }
 
-        if (notSynced) {
-            // No more resources, apply stress instead
-            if (data.outOfBudget) {
-                data.stressed.put(entity.getId(), data.stressed.getOrDefault(entity.getId(), 0) + 1);
-                return false;
-            }
-
-            // Check if we are still within budget
-            if (data.budget > 0 && System.nanoTime() - data.time > data.budget) {
-                data.outOfBudget = true;
-            }
+        // Check if we are still within budget
+        if (data.budget > 0 && System.nanoTime() - data.time > data.budget) {
+            data.outOfBudget = true;
         }
 
         int stress = data.stressed.getOrDefault(entity.getId(), 0);
@@ -162,7 +139,7 @@ public class TickScheduler {
             }
 
             // Relax again
-            if (stress > 0 && notSynced) {
+            if (stress > 0) {
                 data.stressed.put(entity.getId(), stress - 1);
             }
             return true;
@@ -212,9 +189,9 @@ public class TickScheduler {
             blocksPerLevel = Math.min(blocksPerLevel, Config.getInstance().blocksPerLevelDistanceCulled);
         }
 
-        // Frustum culling (Only single player or client world)
+        // Frustum culling (Only single player)
         if (Config.getInstance().enableViewportCulling &&
-            (data.client || level.players().size() == 1)
+            level.players().size() == 1
             && frustum != null
             && !frustum.isVisible(entity.getBoundingBox())) {
             blocksPerLevel = Math.min(blocksPerLevel, Config.getInstance().blocksPerLevelViewportCulled);

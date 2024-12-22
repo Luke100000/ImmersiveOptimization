@@ -1,4 +1,4 @@
-package net.conczin.immersive_optimization.mixin;
+package net.conczin.immersive_optimization.mixin.client;
 
 import net.conczin.immersive_optimization.EntityProfiler;
 import net.conczin.immersive_optimization.TickScheduler;
@@ -14,5 +14,10 @@ public class MinecraftMixin {
     private void immersiveOptimization$onSetLevel(CallbackInfo ci) {
         TickScheduler.INSTANCE.reset();
         EntityProfiler.CLIENT.reset();
+    }
+
+    @Inject(method = "tick()V", at = @At("HEAD"))
+    private void immersiveOptimization$tick(CallbackInfo ci) {
+        EntityProfiler.CLIENT.tick();
     }
 }

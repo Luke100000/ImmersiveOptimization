@@ -1,4 +1,4 @@
-package net.conczin.immersive_optimization.mixin;
+package net.conczin.immersive_optimization.mixin.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.conczin.immersive_optimization.TickScheduler;

@@ -6,6 +6,7 @@ import net.minecraft.core.RegistryAccess;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.entity.EntityTickList;
@@ -32,7 +33,14 @@ abstract public class ServerLevelMixin extends Level {
     }
 
     @Inject(method = "tick(Ljava/util/function/BooleanSupplier;)V", at = @At("HEAD"))
-    private void immersiveOptimization$onTick(BooleanSupplier $$0, CallbackInfo ci) {
+    private void immersiveOptimization$onTick(BooleanSupplier entity, CallbackInfo ci) {
         TickScheduler.INSTANCE.prepareLevel(this, entityTickList);
+    }
+
+    @Inject(method = "tickNonPassenger(Lnet/minecraft/world/entity/Entity;)V", at = @At("HEAD"), cancellable = true)
+    private void immersiveOptimization$tickNonPassenger(Entity entity, CallbackInfo ci) {
+        if (!TickScheduler.INSTANCE.shouldTick(entity)) {
+            ci.cancel();
+        }
     }
 }

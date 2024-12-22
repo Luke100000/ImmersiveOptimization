@@ -10,10 +10,9 @@
     "ServerLevelMixin"
   ],
   "client": [
-    "ClientLevelMixin",
-    "DebugHudMixin",
-    "LevelRendererMixin",
-    "MinecraftMixin"
+    "client.DebugHudMixin",
+    "client.LevelRendererMixin",
+    "client.MinecraftMixin"
   ],
   "server": [
   ],

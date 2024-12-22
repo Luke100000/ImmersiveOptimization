@@ -50,37 +50,19 @@ public class Commands {
                         .then(LiteralArgumentBuilder.<CommandSourceStack>literal("preset")
                                 .then(LiteralArgumentBuilder.<CommandSourceStack>literal("performance")
                                         .executes(context -> {
-                                            Config c = Config.getInstance();
-                                            c.minDistance = 6;
-                                            c.blocksPerLevel = 16;
-                                            c.blocksPerLevelDistanceCulled = 6;
-                                            c.blocksPerLevelViewportCulled = 12;
-                                            c.blocksPerLevelOcclusionCulled = 8;
-                                            c.maxLevel = 40;
+                                            setConfigPreset(0.5f);
                                             return 0;
                                         })
                                 )
                                 .then(LiteralArgumentBuilder.<CommandSourceStack>literal("default")
                                         .executes(context -> {
-                                            Config c = Config.getInstance();
-                                            c.minDistance = 8;
-                                            c.blocksPerLevel = 24;
-                                            c.blocksPerLevelDistanceCulled = 8;
-                                            c.blocksPerLevelViewportCulled = 20;
-                                            c.blocksPerLevelOcclusionCulled = 12;
-                                            c.maxLevel = 20;
+                                            setConfigPreset(1.0f);
                                             return 0;
                                         })
                                 )
                                 .then(LiteralArgumentBuilder.<CommandSourceStack>literal("quality")
                                         .executes(context -> {
-                                            Config c = Config.getInstance();
-                                            c.minDistance = 12;
-                                            c.blocksPerLevel = 30;
-                                            c.blocksPerLevelDistanceCulled = 10;
-                                            c.blocksPerLevelViewportCulled = 25;
-                                            c.blocksPerLevelOcclusionCulled = 15;
-                                            c.maxLevel = 10;
+                                            setConfigPreset(2.0f);
                                             return 0;
                                         })
                                 )
@@ -90,11 +72,21 @@ public class Commands {
                         .then(toggle("enableDistanceCulling", enabled -> Config.getInstance().enableDistanceCulling = enabled))
                         .then(toggle("enableOcclusionCulling", enabled -> Config.getInstance().enableOcclusionCulling = enabled))
                         .then(toggle("enableViewportCulling", enabled -> Config.getInstance().enableViewportCulling = enabled))
-                        .then(toggle("syncWithIntegratedServer", enabled -> Config.getInstance().syncWithIntegratedServer = enabled))
-                        .then(toggle("enableBudget", enabled -> Config.getInstance().entityTickBudgetServer = enabled ? (new Config()).entityTickBudgetServer : 0))
+                        .then(toggle("enableBudget", enabled -> Config.getInstance().entityTickBudget = enabled ? (new Config()).entityTickBudget : 0))
                         .then(toggle("enabledStress", enabled -> Config.getInstance().stressedThreshold = enabled ? (new Config()).stressedThreshold : 0))
                 )
         );
+    }
+
+    private static void setConfigPreset(float quality) {
+        Config d = new Config();
+        Config c = Config.getInstance();
+        c.minDistance = (int) (d.minDistance * quality);
+        c.blocksPerLevel = (int) (d.blocksPerLevel * quality);
+        c.blocksPerLevelDistanceCulled = (int) (d.blocksPerLevelDistanceCulled * quality);
+        c.blocksPerLevelViewportCulled = (int) (d.blocksPerLevelViewportCulled * quality);
+        c.blocksPerLevelOcclusionCulled = (int) (d.blocksPerLevelOcclusionCulled * quality);
+        c.maxLevel = (int) (d.maxLevel / quality);
     }
 
     private static @NotNull String formatProfilerData(EntityProfiler.EntityData data) {
