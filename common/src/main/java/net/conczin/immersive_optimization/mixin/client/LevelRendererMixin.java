@@ -18,6 +18,8 @@ public class LevelRendererMixin {
 
     @Inject(method = "prepareCullFrustum(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/phys/Vec3;Lorg/joml/Matrix4f;)V", at = @At("RETURN"))
     private void immersiveOptimization$prepareCullFrustum(PoseStack $$0, Vec3 $$1, Matrix4f $$2, CallbackInfo ci) {
-        TickScheduler.INSTANCE.frustum = cullingFrustum;
+        if (TickScheduler.INSTANCE.frustum == null) {
+            TickScheduler.INSTANCE.frustum = aabb -> cullingFrustum.isVisible(aabb.inflate(1.0));
+        }
     }
 }

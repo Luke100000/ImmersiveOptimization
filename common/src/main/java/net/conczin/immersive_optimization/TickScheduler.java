@@ -1,7 +1,6 @@
 package net.conczin.immersive_optimization;
 
 import net.conczin.immersive_optimization.config.Config;
-import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.core.SectionPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.MinecraftServer;
@@ -10,6 +9,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.entity.EntityTickList;
+import net.minecraft.world.phys.AABB;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -17,7 +17,11 @@ import java.util.concurrent.ConcurrentHashMap;
 public class TickScheduler {
     public static TickScheduler INSTANCE = new TickScheduler();
 
-    public Frustum frustum;
+    public FrustumProxy frustum;
+
+    public interface FrustumProxy {
+        boolean isVisible(AABB aabb);
+    }
 
     public static class LevelData {
         public boolean active;
@@ -189,7 +193,7 @@ public class TickScheduler {
             blocksPerLevel = Math.min(blocksPerLevel, Config.getInstance().blocksPerLevelDistanceCulled);
         }
 
-        // Frustum culling (Only single player)
+        // Frustum culling (Only available for integrated servers)
         if (Config.getInstance().enableViewportCulling &&
             level.players().size() == 1
             && frustum != null
