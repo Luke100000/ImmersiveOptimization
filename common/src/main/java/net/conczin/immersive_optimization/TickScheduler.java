@@ -14,6 +14,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.entity.EntityTickList;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,7 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class TickScheduler {
     public static final TickScheduler INSTANCE = new TickScheduler();
 
-    public static final int MAX_STRESS_TICKS = 6000;
+    public static final int MAX_STRESS_TICKS = 600;
     public static final int ENTITY_UPDATE_TIME_RANGE = 27;
     public static final int CLEAR_BLOCK_ENTITIES_INTERVAL = 207;
     public static final int CLEAR_ENTITIES_INTERVAL = 12007;
@@ -78,19 +79,20 @@ public class TickScheduler {
 
         public String toLog() {
             return "Rate %2.1f%%, %d stress, %d stressed, %d budgeted, culled: %2.1f%% distance, %2.1f%% viewport, %2.1f%% occlusion".formatted(
-                    stats.tickRate / stats.entities * 100,
+                    previousStats.tickRate / previousStats.entities * 100,
                     stressedTicks,
                     lifeTimeStressedTicks,
                     lifeTimeBudgetTicks,
-                    (float) stats.distanceCulledEntities / stats.entities * 100,
-                    (float) stats.viewportCulledEntities / stats.entities * 100,
-                    (float) stats.occlusionCulledEntities / stats.entities * 100
+                    (float) previousStats.distanceCulledEntities / previousStats.entities * 100,
+                    (float) previousStats.viewportCulledEntities / previousStats.entities * 100,
+                    (float) previousStats.occlusionCulledEntities / previousStats.entities * 100
             );
         }
     }
 
     public final Map<ResourceLocation, LevelData> levelData = new ConcurrentHashMap<>();
 
+    @Nullable
     public LevelData getLevelData(Level level) {
         return levelData.get(level.dimension().location());
     }
@@ -308,6 +310,9 @@ public class TickScheduler {
             return true;
         }
         LevelData data = getLevelData(level);
+        if (data == null) {
+            return true;
+        }
         int priority = data.blockEntityPriorities.computeIfAbsent(pos, p -> this.getBlockEntityPriority(level, p));
         return priority < 1 || (level.getGameTime() + pos) % priority == 0;
     }

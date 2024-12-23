@@ -18,7 +18,9 @@ public class DebugHudMixin {
         ClientLevel level = Minecraft.getInstance().level;
         if (level != null) {
             TickScheduler.LevelData data = TickScheduler.INSTANCE.getLevelData(level);
-            info.getReturnValue().add("[IO] " + data.toLog());
+            if (data != null) {
+                info.getReturnValue().add("[IO] " + data.toLog());
+            }
         }
     }
 }
