@@ -9,7 +9,6 @@ import com.mojang.brigadier.context.CommandContext;
 import net.conczin.immersive_optimization.config.Config;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 
 import java.util.function.Consumer;
 
@@ -22,12 +21,7 @@ public class Commands {
                             StringBuilder sb = new StringBuilder();
                             sb.append("§l§a[Immersive Optimization Report]§r\n");
                             i.levelData.forEach((key, data) ->
-                                    sb.append("%s rate: %.1f%%, %d stress, %d budgeted\n".formatted(
-                                            new ResourceLocation(key).getPath(),
-                                            data.totalTickRate / data.totalEntities * 100,
-                                            data.lifeTimeStressedTicks,
-                                            data.lifeTimeBudgetTicks
-                                    )));
+                                    sb.append("%s: %s\n".formatted(key.getPath(), data.toLog())));
                             send(context, sb.toString());
                             return 0;
                         })

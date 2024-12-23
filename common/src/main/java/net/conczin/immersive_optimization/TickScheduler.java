@@ -5,6 +5,7 @@ import com.logisticscraft.occlusionculling.util.Vec3d;
 import net.conczin.immersive_optimization.config.Config;
 import net.minecraft.core.SectionPos;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -31,6 +32,22 @@ public class TickScheduler {
         boolean isVisible(AABB aabb);
     }
 
+    public static class Stats {
+        public double tickRate = 0;
+        public int entities = 0;
+        public int distanceCulledEntities = 0;
+        public int viewportCulledEntities = 0;
+        public int occlusionCulledEntities = 0;
+
+        public void reset() {
+            tickRate = 0;
+            entities = 0;
+            distanceCulledEntities = 0;
+            viewportCulledEntities = 0;
+            occlusionCulledEntities = 0;
+        }
+    }
+
     public static class LevelData {
         public boolean active;
 
@@ -39,12 +56,8 @@ public class TickScheduler {
         public long budget = 50_000_000;
         public boolean outOfBudget = false;
 
-        // TODO: current and previous tick rate
-        public double totalTickRate = 0;
-        public int totalEntities = 0;
-        public int totalDistanceCulledEntities = 0;
-        public int totalViewportCulledEntities = 0;
-        public int totalOcclusionCulledEntities = 0;
+        public Stats stats = new Stats();
+        public Stats previousStats = new Stats();
 
         public int stressedTicks = 0;
         public int lifeTimeStressedTicks = 0;
@@ -58,15 +71,27 @@ public class TickScheduler {
         public Map<Integer, Long> lastPlayerDistance = new HashMap<>();
         public Map<Integer, OcclusionCullingInstance> cullingInstances = new HashMap<>();
 
-        public LevelData(String identifier) {
-            active = Config.getInstance().dimensions.getOrDefault(identifier, true);
+        public LevelData(ResourceLocation location) {
+            active = Config.getInstance().dimensions.getOrDefault(location.toString(), true);
+        }
+
+        public String toLog() {
+            return "Rate %2.1f%%, %d stress, %d stressed, %d budgeted, culled: %2.1f%% distance, %2.1f%% viewport, %2.1f%% occlusion".formatted(
+                    stats.tickRate / stats.entities * 100,
+                    stressedTicks,
+                    lifeTimeStressedTicks,
+                    lifeTimeBudgetTicks,
+                    (float) stats.distanceCulledEntities / stats.entities * 100,
+                    (float) stats.viewportCulledEntities / stats.entities * 100,
+                    (float) stats.occlusionCulledEntities / stats.entities * 100
+            );
         }
     }
 
-    public final Map<String, LevelData> levelData = new ConcurrentHashMap<>();
+    public final Map<ResourceLocation, LevelData> levelData = new ConcurrentHashMap<>();
 
     public LevelData getLevelData(Level level) {
-        return levelData.computeIfAbsent(level.dimension().location().toString(), LevelData::new);
+        return levelData.computeIfAbsent(level.dimension().location(), LevelData::new);
     }
 
     public void reset() {
@@ -82,13 +107,13 @@ public class TickScheduler {
         // Count total entities
         int totalEntities = 0;
         for (LevelData data : levelData.values()) {
-            totalEntities += data.totalEntities;
+            totalEntities += data.stats.entities;
         }
 
         // And assign a budget to each level
         for (LevelData data : levelData.values()) {
             double budget = Config.getInstance().entityTickBudget;
-            data.budget = budget > 0 ? (long) (budget * data.totalEntities / (totalEntities + 1) * 1_000_000) : 0;
+            data.budget = budget > 0 ? (long) (budget * data.stats.entities / (totalEntities + 1) * 1_000_000) : 0;
         }
     }
 
@@ -100,9 +125,9 @@ public class TickScheduler {
         // Update level stress status
         MinecraftServer server = level.getServer();
         int stressedThreshold = Config.getInstance().stressedThreshold;
-        boolean stressed = stressedThreshold > 0 && server != null && server.tickTimes[(server.getTickCount() - 1) % 100] > stressedThreshold;
+        boolean stressed = stressedThreshold > 0 && server != null && server.tickTimes[(server.getTickCount() - 1) % 100] > stressedThreshold * 1_000_000L;
         if (data.outOfBudget || stressed) {
-            data.stressedTicks++;
+            data.stressedTicks = Math.min(1200, data.stressedTicks + 1);
             if (stressed) data.lifeTimeStressedTicks++;
             if (data.outOfBudget) data.lifeTimeBudgetTicks++;
             data.outOfBudget = false;
@@ -110,12 +135,11 @@ public class TickScheduler {
             data.stressedTicks = Math.max(0, data.stressedTicks - 1);
         }
 
-        if (data.tick % ENTITY_UPDATE_TIME_RANGE == 0 && data.totalEntities > 0) {
-            data.totalTickRate = 0;
-            data.totalEntities = 0;
-            data.totalDistanceCulledEntities = 0;
-            data.totalViewportCulledEntities = 0;
-            data.totalOcclusionCulledEntities = 0;
+        if (data.tick % ENTITY_UPDATE_TIME_RANGE == 0 && data.stats.entities > 0) {
+            Stats previousStats = data.previousStats;
+            data.previousStats = data.stats;
+            data.stats = previousStats;
+            data.stats.reset();
 
             // Prepare occlusion culling caches
             if (Config.getInstance().enableOcclusionCulling) {
@@ -140,7 +164,6 @@ public class TickScheduler {
             data.stressed.clear();
             data.priorities.clear();
             data.cullingInstances.clear();
-            data.totalTickRate = 0;
         }
         if (data.tick % CLEAR_BLOCK_ENTITIES_INTERVAL == 0) {
             data.blockEntityPriorities.clear();
@@ -156,8 +179,8 @@ public class TickScheduler {
                     data.priorities.remove(entity.getId());
                 }
 
-                data.totalTickRate += 1.0 / Math.max(1, priority);
-                data.totalEntities += 1;
+                data.stats.tickRate += 1.0 / Math.max(1, priority);
+                data.stats.entities += 1;
             }
         });
     }
@@ -237,7 +260,7 @@ public class TickScheduler {
         // View distance culling
         if (Config.getInstance().enableDistanceCulling && !entity.shouldRenderAtSqrDistance(closestDistance)) {
             blocksPerLevel = Math.min(blocksPerLevel, Config.getInstance().blocksPerLevelDistanceCulled);
-            data.totalDistanceCulledEntities++;
+            data.stats.distanceCulledEntities++;
         }
 
         // Frustum culling (Only available for integrated servers)
@@ -246,7 +269,7 @@ public class TickScheduler {
             && frustum != null
             && !frustum.isVisible(box)) {
             blocksPerLevel = Math.min(blocksPerLevel, Config.getInstance().blocksPerLevelViewportCulled);
-            data.totalViewportCulledEntities++;
+            data.stats.viewportCulledEntities++;
         }
 
         // Occlusion culling
@@ -266,7 +289,7 @@ public class TickScheduler {
 
             if (!cullingInstance.isAABBVisible(minCorner, maxCorner, eyePosition)) {
                 blocksPerLevel = Math.min(blocksPerLevel, Config.getInstance().blocksPerLevelOcclusionCulled);
-                data.totalOcclusionCulledEntities++;
+                data.stats.occlusionCulledEntities++;
             }
         }
 
