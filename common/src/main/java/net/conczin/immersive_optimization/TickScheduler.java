@@ -254,21 +254,22 @@ public class TickScheduler {
 
         // View distance culling
         if (Config.getInstance().enableDistanceCulling && !entity.shouldRenderAtSqrDistance(closestDistance)) {
-            blocksPerLevel = Math.min(blocksPerLevel, Config.getInstance().blocksPerLevelDistanceCulled);
+            blocksPerLevel = Config.getInstance().blocksPerLevelDistanceCulled;
             data.stats.distanceCulledEntities++;
         }
 
         // Frustum culling (Only available for integrated servers)
-        if (Config.getInstance().enableViewportCulling &&
-            level.players().size() == 1
+        if (Config.getInstance().enableViewportCulling
+            && blocksPerLevel > Config.getInstance().blocksPerLevelViewportCulled
+            && level.players().size() == 1
             && frustum != null
             && !frustum.isVisible(box)) {
-            blocksPerLevel = Math.min(blocksPerLevel, Config.getInstance().blocksPerLevelViewportCulled);
+            blocksPerLevel = Config.getInstance().blocksPerLevelViewportCulled;
             data.stats.viewportCulledEntities++;
         }
 
         // Occlusion culling (If no player within the culling distance can see the entity)
-        if (Config.getInstance().enableOcclusionCulling && box.getSize() < 10) {
+        if (Config.getInstance().enableOcclusionCulling && blocksPerLevel > Config.getInstance().blocksPerLevelOcclusionCulled && box.getSize() < 10) {
             boolean visible = false;
             for (Player player : level.players()) {
                 double distance = player.distanceToSqr(entity);
@@ -294,7 +295,7 @@ public class TickScheduler {
             }
 
             if (!visible) {
-                blocksPerLevel = Math.min(blocksPerLevel, Config.getInstance().blocksPerLevelOcclusionCulled);
+                blocksPerLevel = Config.getInstance().blocksPerLevelOcclusionCulled;
                 data.stats.occlusionCulledEntities++;
             }
         }
