@@ -24,10 +24,8 @@ jobs:
           java-version: 17
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
-      - name: Build with Gradle - Forge
-        run: ./gradlew :forge:build
-      - name: Build with Gradle - Fabric
-        run: ./gradlew :fabric:build
+      - name: Build with Gradle
+        run: ./gradlew :build
       - name: Get tag
         if: ${{ success() && startsWith(github.ref, 'refs/tags/') }}
         id: tag
@@ -37,10 +35,6 @@ jobs:
         with:
           separator: "+"
           msg: ${{steps.tag.outputs.tag}}
-      - name: "Rename Fabric files"
-        run: mv "fabric/build/libs/immersive_optimization-${{steps.tag.outputs.tag}}.jar" "fabric/build/libs/immersive_optimization-${{steps.tag.outputs.tag}}-fabric.jar"
-      - name: "Rename Forge files"
-        run: mv "forge/build/libs/immersive_optimization-${{steps.tag.outputs.tag}}.jar" "forge/build/libs/immersive_optimization-${{steps.tag.outputs.tag}}-forge.jar"
       - name: "Upload Fabric"
         uses: Kir-Antipov/mc-publish@v3.3.0
         if: ${{ success() && startsWith(github.ref, 'refs/tags/') }}
@@ -53,7 +47,7 @@ jobs:
           name: "[Fabric ${{steps.split.outputs._1}}] Immersive Optimization - ${{steps.split.outputs._0}}"
           changelog-file: changelog.md
           version-type: release
-          files: "fabric/build/libs/immersive_optimization-${{steps.tag.outputs.tag}}-fabric.jar"
+          files: "fabric/build/libs/immersive_optimization-fabric-${{steps.split.outputs._1}}-${{steps.split.outputs._0}}.jar"
           loaders: |
             fabric
           game-versions: |
@@ -76,7 +70,7 @@ jobs:
           name: "[Forge ${{steps.split.outputs._1}}] Immersive Optimization - ${{steps.split.outputs._0}}"
           changelog-file: changelog.md
           version-type: release
-          files: "forge/build/libs/immersive_optimization-${{steps.tag.outputs.tag}}-forge.jar"
+          files: "forge/build/libs/immersive_optimization-forge-${{steps.split.outputs._1}}-${{steps.split.outputs._0}}.jar"
           loaders: |
             forge
           game-versions: |
