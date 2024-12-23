@@ -8,7 +8,7 @@ function.
 ## Features
 
 * Gradually slows down tick rate of entities and block entities
-    * When occluded by blocks
+    * When occluded by blocks (currently disabled since Forge hates me, and because effect is marginal)
     * When out of viewport
     * When far away
 * Distributes updates over multiple ticks to flatten lag spikes

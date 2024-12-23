@@ -23,7 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class TickScheduler {
     public static TickScheduler INSTANCE = new TickScheduler();
 
-    public static final int THREAD_SLEEP = 1000;
+    public static final int THREAD_SLEEP = 500;
     public static final int MAX_STRESS_TICKS = 600;
     public static final int CLEAR_BLOCK_ENTITIES_INTERVAL = 207;
     public static final int CLEAR_ENTITIES_INTERVAL = 12007;
