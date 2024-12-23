@@ -22,6 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class TickScheduler {
     public static final TickScheduler INSTANCE = new TickScheduler();
 
+    public static final int MAX_STRESS_TICKS = 6000;
     public static final int ENTITY_UPDATE_TIME_RANGE = 27;
     public static final int CLEAR_BLOCK_ENTITIES_INTERVAL = 207;
     public static final int CLEAR_ENTITIES_INTERVAL = 12007;
@@ -91,7 +92,7 @@ public class TickScheduler {
     public final Map<ResourceLocation, LevelData> levelData = new ConcurrentHashMap<>();
 
     public LevelData getLevelData(Level level) {
-        return levelData.computeIfAbsent(level.dimension().location(), LevelData::new);
+        return levelData.get(level.dimension().location());
     }
 
     public void reset() {
@@ -118,16 +119,16 @@ public class TickScheduler {
     }
 
     public void prepareLevel(Level level, EntityTickList tickingEntities) {
-        LevelData data = getLevelData(level);
+        LevelData data = levelData.computeIfAbsent(level.dimension().location(), LevelData::new);
         data.time = System.nanoTime();
         data.tick = level.getGameTime();
 
         // Update level stress status
         MinecraftServer server = level.getServer();
         int stressedThreshold = Config.getInstance().stressedThreshold;
-        boolean stressed = stressedThreshold > 0 && server != null && server.tickTimes[(server.getTickCount() - 1) % 100] > stressedThreshold * 1_000_000L;
+        boolean stressed = stressedThreshold > 0 && server != null && server.getAverageTickTime() > stressedThreshold;
         if (data.outOfBudget || stressed) {
-            data.stressedTicks = Math.min(1200, data.stressedTicks + 1);
+            data.stressedTicks = Math.min(MAX_STRESS_TICKS, data.stressedTicks + 10);
             if (stressed) data.lifeTimeStressedTicks++;
             if (data.outOfBudget) data.lifeTimeBudgetTicks++;
             data.outOfBudget = false;
@@ -169,6 +170,12 @@ public class TickScheduler {
             data.blockEntityPriorities.clear();
         }
 
+        // Entity culling disabled
+        if (!Config.getInstance().enableEntities) {
+            data.priorities.clear();
+            return;
+        }
+
         // Update entity priorities (distributed over n ticks)
         tickingEntities.forEach(entity -> {
             if ((data.tick + entity.getId()) % ENTITY_UPDATE_TIME_RANGE == 0) {
@@ -191,6 +198,9 @@ public class TickScheduler {
         }
 
         LevelData data = getLevelData(entity.level());
+        if (data == null) {
+            return true;
+        }
 
         int priority = data.priorities.getOrDefault(entity.getId(), 0);
         if (priority <= 1) {
@@ -220,20 +230,7 @@ public class TickScheduler {
         }
     }
 
-    public boolean shouldTick(Level level, long pos) {
-        if (!Config.getInstance().enableBlockEntities) {
-            return true;
-        }
-        LevelData data = getLevelData(level);
-        int priority = data.blockEntityPriorities.computeIfAbsent(pos, p -> this.getBlockEntityPriority(level, p));
-        return priority < 1 || (level.getGameTime() + pos) % priority == 0;
-    }
-
     public int getPriority(LevelData data, Level level, Entity entity) {
-        if (!Config.getInstance().enableEntities) {
-            return 0;
-        }
-
         // Blacklist entities
         String id = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString();
         if (!Config.getInstance().entities.getOrDefault(id, true)) {
@@ -241,19 +238,16 @@ public class TickScheduler {
         }
 
         // Find the closest player
-        double closestDistance = Double.MAX_VALUE;
+        double minDistance = Double.MAX_VALUE;
         for (Player player : level.players()) {
-            double distance = player.distanceToSqr(entity);
-            if (distance < closestDistance) {
-                closestDistance = distance;
-            }
+            minDistance = Math.min(minDistance, player.distanceToSqr(entity));
         }
 
         AABB box = entity.getBoundingBox();
         int blocksPerLevel = Config.getInstance().blocksPerLevel;
 
         // View distance culling
-        if (Config.getInstance().enableDistanceCulling && !entity.shouldRenderAtSqrDistance(closestDistance)) {
+        if (Config.getInstance().enableDistanceCulling && !entity.shouldRenderAtSqrDistance(minDistance)) {
             blocksPerLevel = Config.getInstance().blocksPerLevelDistanceCulled;
             data.stats.distanceCulledEntities++;
         }
@@ -301,12 +295,21 @@ public class TickScheduler {
         }
 
         // Assign an optimization level
-        int antiStress = (int) Math.sqrt(data.stressedTicks);
-        int finalBlocksPerLevel = blocksPerLevel - data.stressedTicks - antiStress;
-        int distanceLevel = (int) ((Math.sqrt(closestDistance) - Config.getInstance().minDistance) / Math.max(2, finalBlocksPerLevel));
+        double antiStress = 1.0 - (double) data.stressedTicks / MAX_STRESS_TICKS;
+        int finalBlocksPerLevel = (int) ((blocksPerLevel - data.stressedTicks) * antiStress);
+        int distanceLevel = (int) ((Math.sqrt(minDistance) - Config.getInstance().minDistance) / Math.max(2, finalBlocksPerLevel));
 
         // And clamp it to sane numbers
         return Math.min(Config.getInstance().maxLevel, Math.max(1, distanceLevel + 1));
+    }
+
+    public boolean shouldTick(Level level, long pos) {
+        if (!Config.getInstance().enableBlockEntities) {
+            return true;
+        }
+        LevelData data = getLevelData(level);
+        int priority = data.blockEntityPriorities.computeIfAbsent(pos, p -> this.getBlockEntityPriority(level, p));
+        return priority < 1 || (level.getGameTime() + pos) % priority == 0;
     }
 
     private int getBlockEntityPriority(Level level, long p) {
