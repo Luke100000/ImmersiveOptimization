@@ -4,6 +4,5 @@
     * Occlusion culling
     * Distance culling
     * Viewport culling on integrated servers
-* Added basic entity profiling
 * Configuration
 * Server profile report and configuration commands

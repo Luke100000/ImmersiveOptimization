@@ -10,7 +10,6 @@ import net.conczin.immersive_optimization.config.Config;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
 
@@ -29,19 +28,6 @@ public class Commands {
                                             data.lifeTimeStressedTicks,
                                             data.lifeTimeBudgetTicks
                                     )));
-                            send(context, sb.toString());
-                            return 0;
-                        })
-                )
-                .then(LiteralArgumentBuilder.<CommandSourceStack>literal("profiler")
-                        .executes(context -> {
-                            StringBuilder sb = new StringBuilder();
-                            sb.append("§l§a[Immersive Optimization Profiler]§r\n");
-                            EntityProfiler.SERVER.getTopEntities(8).forEach(data -> sb.append(formatProfilerData(data)));
-                            if (EntityProfiler.CLIENT.tick > 0) {
-                                sb.append("§l§a[Client]§r\n");
-                                EntityProfiler.CLIENT.getTopEntities(8).forEach(data -> sb.append(formatProfilerData(data)));
-                            }
                             send(context, sb.toString());
                             return 0;
                         })
@@ -88,16 +74,6 @@ public class Commands {
         c.blocksPerLevelOcclusionCulled = (int) (d.blocksPerLevelOcclusionCulled * quality);
         c.maxLevel = (int) (d.maxLevel / quality);
         c.save();
-    }
-
-    private static @NotNull String formatProfilerData(EntityProfiler.EntityData data) {
-        return "%s %d * %2.1fns = %2.1fms, %2.1fms max\n".formatted(
-                data.name,
-                data.getSamples(),
-                data.getAverage(),
-                data.getTime() / 1_000_000.0,
-                data.max / 1_000_000.0
-        );
     }
 
     private static ArgumentBuilder<CommandSourceStack, ?> toggle(String name, Consumer<Boolean> consumer) {
