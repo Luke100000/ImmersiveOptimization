@@ -322,6 +322,6 @@ public class TickScheduler {
                 minDistance = distance;
             }
         }
-        return Math.min((int) ((Math.sqrt(minDistance * 16) - Config.getInstance().minDistance) / Config.getInstance().blocksPerLevel) + 1, Config.getInstance().maxLevel);
+        return Math.min((int) ((Math.sqrt(minDistance * 16) - Config.getInstance().minDistance) / Config.getInstance().blocksPerLevelBlockEntities) + 1, Config.getInstance().maxLevel);
     }
 }

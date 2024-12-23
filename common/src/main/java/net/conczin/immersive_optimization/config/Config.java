@@ -37,6 +37,9 @@ public final class Config extends JsonConfig {
     public int blocksPerLevelViewportCulled = 20;
     public int maxLevel = 20;
 
+    // The same for block entities, but without further culling.
+    public int blocksPerLevelBlockEntities = 32;
+
     // When the budget is exceeded, the server will skip all remaining entities, and prioritize them next tick.
     // This math may is slightly biased towards the end of the list.
     // 0 to turn off.
