@@ -1,5 +1,7 @@
 package net.conczin.immersive_optimization;
 
+import com.logisticscraft.occlusionculling.OcclusionCullingInstance;
+import com.logisticscraft.occlusionculling.util.Vec3d;
 import net.conczin.immersive_optimization.config.Config;
 import net.minecraft.core.SectionPos;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -10,6 +12,7 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.entity.EntityTickList;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -19,8 +22,8 @@ public class TickScheduler {
     public static final TickScheduler INSTANCE = new TickScheduler();
 
     public static final int ENTITY_UPDATE_TIME_RANGE = 27;
-    public static final int CLEAR_BLOCK_ENTITIES_INTERVAL = 200;
-    public static final int CLEAR_ENTITIES_INTERVAL = 12000;
+    public static final int CLEAR_BLOCK_ENTITIES_INTERVAL = 207;
+    public static final int CLEAR_ENTITIES_INTERVAL = 12007;
 
     public FrustumProxy frustum;
 
@@ -36,8 +39,12 @@ public class TickScheduler {
         public long budget = 50_000_000;
         public boolean outOfBudget = false;
 
+        // TODO: current and previous tick rate
         public double totalTickRate = 0;
         public int totalEntities = 0;
+        public int totalDistanceCulledEntities = 0;
+        public int totalViewportCulledEntities = 0;
+        public int totalOcclusionCulledEntities = 0;
 
         public int stressedTicks = 0;
         public int lifeTimeStressedTicks = 0;
@@ -47,6 +54,9 @@ public class TickScheduler {
         public Map<Integer, Integer> priorities = new HashMap<>();
 
         public Map<Long, Integer> blockEntityPriorities = new HashMap<>();
+
+        public Map<Integer, Long> lastPlayerDistance = new HashMap<>();
+        public Map<Integer, OcclusionCullingInstance> cullingInstances = new HashMap<>();
 
         public LevelData(String identifier) {
             active = Config.getInstance().dimensions.getOrDefault(identifier, true);
@@ -63,6 +73,10 @@ public class TickScheduler {
         levelData.clear();
         frustum = null;
     }
+
+    protected Vec3d minCorner = new Vec3d(0, 0, 0);
+    protected Vec3d maxCorner = new Vec3d(0, 0, 0);
+    protected Vec3d eyePosition = new Vec3d(0, 0, 0);
 
     public void tick() {
         // Count total entities
@@ -86,7 +100,7 @@ public class TickScheduler {
         // Update level stress status
         MinecraftServer server = level.getServer();
         int stressedThreshold = Config.getInstance().stressedThreshold;
-        boolean stressed = stressedThreshold > 0 && server != null && server.getAverageTickTime() > stressedThreshold;
+        boolean stressed = stressedThreshold > 0 && server != null && server.tickTimes[(server.getTickCount() - 1) % 100] > stressedThreshold;
         if (data.outOfBudget || stressed) {
             data.stressedTicks++;
             if (stressed) data.lifeTimeStressedTicks++;
@@ -99,12 +113,33 @@ public class TickScheduler {
         if (data.tick % ENTITY_UPDATE_TIME_RANGE == 0 && data.totalEntities > 0) {
             data.totalTickRate = 0;
             data.totalEntities = 0;
+            data.totalDistanceCulledEntities = 0;
+            data.totalViewportCulledEntities = 0;
+            data.totalOcclusionCulledEntities = 0;
+
+            // Prepare occlusion culling caches
+            if (Config.getInstance().enableOcclusionCulling) {
+                for (Player player : level.players()) {
+                    int id = player.getId();
+                    Vec3 pos = player.position();
+                    long position = (long) pos.x + (long) pos.y * 1024 + (long) pos.z * 1024 * 1024;
+                    if (!data.lastPlayerDistance.containsKey(id) || data.lastPlayerDistance.get(id) != position) {
+                        data.lastPlayerDistance.put(id, position);
+                        if (data.cullingInstances.containsKey(id)) {
+                            data.cullingInstances.get(id).resetCache();
+                        } else {
+                            data.cullingInstances.put(id, new OcclusionCullingInstance(Config.getInstance().occlusionCullingDistance, new Provider(level)));
+                        }
+                    }
+                }
+            }
         }
 
         // Clear priorities every n seconds to avoid memory leaks
         if (data.tick % CLEAR_ENTITIES_INTERVAL == 0) {
             data.stressed.clear();
             data.priorities.clear();
+            data.cullingInstances.clear();
             data.totalTickRate = 0;
         }
         if (data.tick % CLEAR_BLOCK_ENTITIES_INTERVAL == 0) {
@@ -183,38 +218,62 @@ public class TickScheduler {
         }
 
         // Find the closest player
-        double closestPlayer = Double.MAX_VALUE;
+        double closestDistance = Double.MAX_VALUE;
+        Player closestPlayer = null;
         for (Player player : level.players()) {
             double dx = player.getX() - entity.getX();
             double dy = player.getY() - entity.getY();
             double dz = player.getZ() - entity.getZ();
             double distance = dx * dx + dy * dy + dz * dz;
-            if (distance < closestPlayer) {
-                closestPlayer = distance;
+            if (distance < closestDistance) {
+                closestDistance = distance;
+                closestPlayer = player;
             }
         }
 
+        AABB box = entity.getBoundingBox();
         int blocksPerLevel = Config.getInstance().blocksPerLevel;
 
-        // TODO: Implement occlusion culling
-
         // View distance culling
-        if (Config.getInstance().enableDistanceCulling && !entity.shouldRenderAtSqrDistance(closestPlayer)) {
+        if (Config.getInstance().enableDistanceCulling && !entity.shouldRenderAtSqrDistance(closestDistance)) {
             blocksPerLevel = Math.min(blocksPerLevel, Config.getInstance().blocksPerLevelDistanceCulled);
+            data.totalDistanceCulledEntities++;
         }
 
         // Frustum culling (Only available for integrated servers)
         if (Config.getInstance().enableViewportCulling &&
             level.players().size() == 1
             && frustum != null
-            && !frustum.isVisible(entity.getBoundingBox())) {
+            && !frustum.isVisible(box)) {
             blocksPerLevel = Math.min(blocksPerLevel, Config.getInstance().blocksPerLevelViewportCulled);
+            data.totalViewportCulledEntities++;
+        }
+
+        // Occlusion culling
+        if (Config.getInstance().enableOcclusionCulling && closestPlayer != null && box.getSize() < 10 && closestDistance < Math.pow(Config.getInstance().occlusionCullingDistance - 1, 2) && data.cullingInstances.containsKey(closestPlayer.getId())) {
+            OcclusionCullingInstance cullingInstance = data.cullingInstances.get(closestPlayer.getId());
+            Vec3 eye = closestPlayer.getEyePosition();
+
+            minCorner.x = box.minX;
+            minCorner.y = box.minY;
+            minCorner.z = box.minZ;
+            maxCorner.x = box.maxX;
+            maxCorner.y = box.maxY;
+            maxCorner.z = box.maxZ;
+            eyePosition.x = eye.x;
+            eyePosition.y = eye.y;
+            eyePosition.z = eye.z;
+
+            if (!cullingInstance.isAABBVisible(minCorner, maxCorner, eyePosition)) {
+                blocksPerLevel = Math.min(blocksPerLevel, Config.getInstance().blocksPerLevelOcclusionCulled);
+                data.totalOcclusionCulledEntities++;
+            }
         }
 
         // Assign an optimization level
         int antiStress = (int) Math.sqrt(data.stressedTicks);
         int finalBlocksPerLevel = blocksPerLevel - data.stressedTicks - antiStress;
-        int distanceLevel = (int) ((Math.sqrt(closestPlayer) - Config.getInstance().minDistance) / Math.max(2, finalBlocksPerLevel));
+        int distanceLevel = (int) ((Math.sqrt(closestDistance) - Config.getInstance().minDistance) / Math.max(2, finalBlocksPerLevel));
 
         // And clamp it to sane numbers
         return Math.min(Config.getInstance().maxLevel, Math.max(1, distanceLevel + 1));

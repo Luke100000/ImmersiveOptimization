@@ -1,15 +1,9 @@
-# TODO
-
-* Integrate occlusion culling
-* Client sync by chat with interaction link
-    * Optional on login, otherwise just on changes by command
-* Fix tickTime on Forge
-
 # 0.0.1
 
-* Added basic tick scheduler and config
-    * Viewport culling
+* Added tick scheduler
+    * Occlusion culling
     * Distance culling
-    * Client linking on integrated servers
+    * Viewport culling on integrated servers
 * Added basic entity profiling
+* Configuration
 * Server profile report and configuration commands

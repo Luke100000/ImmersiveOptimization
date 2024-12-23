@@ -22,8 +22,13 @@ public class DebugHudMixin {
                     data.totalTickRate / data.totalEntities * 100,
                     data.stressedTicks,
                     data.lifeTimeStressedTicks,
-                    data.lifeTimeBudgetTicks)
-            );
+                    data.lifeTimeBudgetTicks
+            ));
+            info.getReturnValue().add("[Immersive Optimization] Culled: %2.1f%% distance, %2.1f%% viewport, %2.1f%% occlusion".formatted(
+                    (float) data.totalDistanceCulledEntities / data.totalEntities * 100,
+                    (float) data.totalViewportCulledEntities / data.totalEntities * 100,
+                    (float) data.totalOcclusionCulledEntities / data.totalEntities * 100
+            ));
         }
     }
 }

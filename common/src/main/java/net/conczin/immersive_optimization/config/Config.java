@@ -33,13 +33,16 @@ public final class Config extends JsonConfig {
 
     // Every blocksPerLevel, the tick rate will be reduced by 1, offset by initial minDistance to avoid visible glitches.
     // Smaller values increase server performance.
-    // Theoretically it is safe to increase this to large values like 100, then only rely on the stressed mechanic below.
-    public int minDistance = 8;
-    public int blocksPerLevel = 24;
+    public int minDistance = 6;
+    public int blocksPerLevel = 64;
     public int blocksPerLevelDistanceCulled = 8;
-    public int blocksPerLevelViewportCulled = 20;
-    public int blocksPerLevelOcclusionCulled = 12;
+    public int blocksPerLevelViewportCulled = 20 ;
+    public int blocksPerLevelOcclusionCulled = 10;
     public int maxLevel = 20;
+
+    // The max distance entities are occlusion culled.
+    // This setting has a cubic memory footprint, and values above the viewDistance are useless (as they get distance culled)
+    public int occlusionCullingDistance = 128;
 
     // When the budget is exceeded, the server will skip all remaining entities, and prioritize them next tick.
     // This math may is slightly biased towards the end of the list.

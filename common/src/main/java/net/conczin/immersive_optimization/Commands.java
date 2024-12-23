@@ -87,6 +87,7 @@ public class Commands {
         c.blocksPerLevelViewportCulled = (int) (d.blocksPerLevelViewportCulled * quality);
         c.blocksPerLevelOcclusionCulled = (int) (d.blocksPerLevelOcclusionCulled * quality);
         c.maxLevel = (int) (d.maxLevel / quality);
+        c.save();
     }
 
     private static @NotNull String formatProfilerData(EntityProfiler.EntityData data) {

@@ -77,6 +77,10 @@ dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     compileOnly project(":common")
     annotationProcessor("org.spongepowered:mixin:0.8.5-SNAPSHOT:processor")
+    implementation "com.logisticscraft:occlusionculling:0.0.8-SNAPSHOT"
+    jarJar(group: "com.logisticscraft", name: "occlusionculling", version: "[0.0.8-SNAPSHOT,0.0.9-SNAPSHOT]") {
+        jarJar.pin(it, '[0.0.8-SNAPSHOT,0.0.9-SNAPSHOT]')
+    }
 }
 
 tasks.withType(JavaCompile).configureEach {
