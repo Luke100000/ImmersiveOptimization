@@ -1,7 +1,5 @@
 package net.conczin.immersive_optimization;
 
-import com.logisticscraft.occlusionculling.OcclusionCullingInstance;
-import com.logisticscraft.occlusionculling.util.Vec3d;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.conczin.immersive_optimization.config.Config;
 import net.conczin.immersive_optimization.mixin.EntityTickListAccessor;
@@ -16,11 +14,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ConcurrentModificationException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -89,14 +85,12 @@ public class TickScheduler {
         public int entities = 0;
         public int distanceCulledEntities = 0;
         public int viewportCulledEntities = 0;
-        public int occlusionCulledEntities = 0;
 
         public void reset() {
             tickRate = 0;
             entities = 0;
             distanceCulledEntities = 0;
             viewportCulledEntities = 0;
-            occlusionCulledEntities = 0;
         }
     }
 
@@ -120,22 +114,19 @@ public class TickScheduler {
 
         public Map<Long, Integer> blockEntityPriorities = new ConcurrentHashMap<>();
 
-        public Map<Integer, Long> lastPlayerDistance = new HashMap<>();
-        public Map<Integer, OcclusionCullingInstance> cullingInstances = new HashMap<>();
 
         public LevelData(ResourceLocation location) {
             active = Config.getInstance().dimensions.getOrDefault(location.toString(), true);
         }
 
         public String toLog() {
-            return "Rate %2.1f%%, %d stress, %d stressed, %d budgeted, culled %2.1f%% distance, %2.1f%% viewport, %2.1f%% occlusion".formatted(
+            return "Rate %2.1f%%, %d stress, %d stressed, %d budgeted, culled %2.1f%% distance, %2.1f%% viewport".formatted(
                     previousStats.tickRate / previousStats.entities * 100,
                     stressedTicks,
                     lifeTimeStressedTicks,
                     lifeTimeBudgetTicks,
                     (float) previousStats.distanceCulledEntities / previousStats.entities * 100,
-                    (float) previousStats.viewportCulledEntities / previousStats.entities * 100,
-                    (float) previousStats.occlusionCulledEntities / previousStats.entities * 100
+                    (float) previousStats.viewportCulledEntities / previousStats.entities * 100
             );
         }
     }
@@ -151,10 +142,6 @@ public class TickScheduler {
         levelData.clear();
         frustum = null;
     }
-
-    protected Vec3d minCorner = new Vec3d(0, 0, 0);
-    protected Vec3d maxCorner = new Vec3d(0, 0, 0);
-    protected Vec3d eyePosition = new Vec3d(0, 0, 0);
 
     public void startLevelTick(ServerLevel level) {
         LevelData data = getLevelData(level);
@@ -199,28 +186,10 @@ public class TickScheduler {
         data.stats = previousStats;
         data.stats.reset();
 
-        // Prepare occlusion culling caches
-        if (Config.getInstance().enableOcclusionCulling) {
-            for (Player player : level.players()) {
-                int id = player.getId();
-                Vec3 pos = player.position();
-                long position = (long) pos.x + (long) pos.y * 1024 + (long) pos.z * 1024 * 1024;
-                if (!data.lastPlayerDistance.containsKey(id) || data.lastPlayerDistance.get(id) != position) {
-                    data.lastPlayerDistance.put(id, position);
-                    if (data.cullingInstances.containsKey(id)) {
-                        data.cullingInstances.get(id).resetCache();
-                    } else {
-                        data.cullingInstances.put(id, new OcclusionCullingInstance(Config.getInstance().occlusionCullingDistance, new Provider(level)));
-                    }
-                }
-            }
-        }
-
         // Clear priorities every n seconds to avoid memory leaks
         if (tick % CLEAR_ENTITIES_INTERVAL == 0) {
             data.budgeted.clear();
             data.priorities.clear();
-            data.cullingInstances.clear();
         }
         if (tick % CLEAR_BLOCK_ENTITIES_INTERVAL == 0) {
             data.blockEntityPriorities.clear();
@@ -318,38 +287,6 @@ public class TickScheduler {
             && !frustum.isVisible(box)) {
             blocksPerLevel = Config.getInstance().blocksPerLevelViewportCulled;
             data.stats.viewportCulledEntities++;
-        }
-
-        // Occlusion culling (If no player within the culling distance can see the entity)
-        if (Config.getInstance().enableOcclusionCulling && blocksPerLevel > Config.getInstance().blocksPerLevelOcclusionCulled && box.getSize() < 10) {
-            boolean visible = false;
-            for (Player player : level.players()) {
-                double distance = player.distanceToSqr(entity);
-                if (distance < Math.pow(Config.getInstance().occlusionCullingDistance - 1, 2) && data.cullingInstances.containsKey(player.getId())) {
-                    OcclusionCullingInstance cullingInstance = data.cullingInstances.get(player.getId());
-                    Vec3 eye = player.getEyePosition();
-
-                    minCorner.x = box.minX;
-                    minCorner.y = box.minY;
-                    minCorner.z = box.minZ;
-                    maxCorner.x = box.maxX;
-                    maxCorner.y = box.maxY;
-                    maxCorner.z = box.maxZ;
-                    eyePosition.x = eye.x;
-                    eyePosition.y = eye.y;
-                    eyePosition.z = eye.z;
-
-                    if (cullingInstance.isAABBVisible(minCorner, maxCorner, eyePosition)) {
-                        visible = true;
-                        break;
-                    }
-                }
-            }
-
-            if (!visible) {
-                blocksPerLevel = Config.getInstance().blocksPerLevelOcclusionCulled;
-                data.stats.occlusionCulledEntities++;
-            }
         }
 
         // Assign an optimization level

@@ -26,8 +26,6 @@ public final class Config extends JsonConfig {
 
     // Distance culling reduces the tick rate of entities when not visible due to distance.
     public boolean enableDistanceCulling = true;
-    // Occlusion culling highly improves visual quality by prioritizing visible entities.
-    public boolean enableOcclusionCulling = true;
     // Viewport culling slows down entities when outside the camera perspective.
     public boolean enableViewportCulling = true;
 
@@ -35,14 +33,9 @@ public final class Config extends JsonConfig {
     // Smaller values increase server performance.
     public int minDistance = 6;
     public int blocksPerLevel = 64;
-    public int blocksPerLevelDistanceCulled = 8;
-    public int blocksPerLevelViewportCulled = 20 ;
-    public int blocksPerLevelOcclusionCulled = 10;
+    public int blocksPerLevelDistanceCulled = 10;
+    public int blocksPerLevelViewportCulled = 20;
     public int maxLevel = 20;
-
-    // The max distance entities are occlusion culled.
-    // This setting has a cubic memory footprint, and values above the viewDistance are useless (as they get distance culled)
-    public int occlusionCullingDistance = 128;
 
     // When the budget is exceeded, the server will skip all remaining entities, and prioritize them next tick.
     // This math may is slightly biased towards the end of the list.

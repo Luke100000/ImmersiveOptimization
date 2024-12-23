@@ -1,3 +1,7 @@
+# TODO
+
+* Culling is rather intensive, switch to 500ms tick, but n tick culling spread with separate flag.
+
 # 0.0.1
 
 * Added tick scheduler
@@ -5,4 +9,4 @@
     * Distance culling
     * Viewport culling on integrated servers
 * Configuration
-* Server profile report and configuration commands
+* Server report and configuration commands

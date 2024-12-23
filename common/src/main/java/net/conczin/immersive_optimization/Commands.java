@@ -49,7 +49,6 @@ public class Commands {
                         .then(toggle("enableEntities", enabled -> Config.getInstance().enableEntities = enabled))
                         .then(toggle("enableBlockEntities", enabled -> Config.getInstance().enableBlockEntities = enabled))
                         .then(toggle("enableDistanceCulling", enabled -> Config.getInstance().enableDistanceCulling = enabled))
-                        .then(toggle("enableOcclusionCulling", enabled -> Config.getInstance().enableOcclusionCulling = enabled))
                         .then(toggle("enableViewportCulling", enabled -> Config.getInstance().enableViewportCulling = enabled))
                         .then(toggle("enableBudget", enabled -> Config.getInstance().entityTickBudget = enabled ? (new Config()).entityTickBudget : 0))
                         .then(toggle("enabledStress", enabled -> Config.getInstance().stressedThreshold = enabled ? (new Config()).stressedThreshold : 0))
@@ -64,7 +63,6 @@ public class Commands {
         c.blocksPerLevel = (int) (d.blocksPerLevel * quality);
         c.blocksPerLevelDistanceCulled = (int) (d.blocksPerLevelDistanceCulled * quality);
         c.blocksPerLevelViewportCulled = (int) (d.blocksPerLevelViewportCulled * quality);
-        c.blocksPerLevelOcclusionCulled = (int) (d.blocksPerLevelOcclusionCulled * quality);
         c.maxLevel = (int) (d.maxLevel / quality);
         c.save();
     }
