@@ -9,6 +9,7 @@ import com.mojang.brigadier.context.CommandContext;
 import net.conczin.immersive_optimization.config.Config;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 
 import java.util.function.Consumer;
 
@@ -81,6 +82,9 @@ public class Commands {
     }
 
     private static void send(CommandContext<CommandSourceStack> context, String message) {
-        context.getSource().sendSuccess(() -> Component.literal(message), true);
+        ServerPlayer player = context.getSource().getPlayer();
+        if (player != null) {
+            player.sendSystemMessage(Component.literal(message));
+        }
     }
 }
