@@ -7,17 +7,10 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.function.BooleanSupplier;
-
 @Mixin(MinecraftServer.class)
 public abstract class MinecraftServerMixin {
-    @Inject(method = "tickChildren(Ljava/util/function/BooleanSupplier;)V", at = @At("HEAD"))
-    private void immersiveOptimization$onTick(BooleanSupplier $$0, CallbackInfo ci) {
-        TickScheduler.INSTANCE.tick();
-    }
-
     @Inject(method = "loadLevel()V", at = @At("HEAD"))
     private void immersiveOptimization$loadLevel(CallbackInfo ci) {
-        TickScheduler.INSTANCE.reset();
+        TickScheduler.setServer((MinecraftServer) (Object) this);
     }
 }

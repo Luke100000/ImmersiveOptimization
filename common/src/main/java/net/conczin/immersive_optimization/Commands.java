@@ -17,10 +17,9 @@ public class Commands {
         dispatcher.register(LiteralArgumentBuilder.<CommandSourceStack>literal("io")
                 .then(LiteralArgumentBuilder.<CommandSourceStack>literal("report")
                         .executes(context -> {
-                            TickScheduler i = TickScheduler.INSTANCE;
                             StringBuilder sb = new StringBuilder();
                             sb.append("§l§a[Immersive Optimization Report]§r\n");
-                            i.levelData.forEach((key, data) ->
+                            TickScheduler.INSTANCE.levelData.forEach((key, data) ->
                                     sb.append("%s: %s\n".formatted(key.getPath(), data.toLog())));
                             send(context, sb.toString());
                             return 0;
