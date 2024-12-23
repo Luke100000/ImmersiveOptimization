@@ -242,15 +242,10 @@ public class TickScheduler {
 
         // Find the closest player
         double closestDistance = Double.MAX_VALUE;
-        Player closestPlayer = null;
         for (Player player : level.players()) {
-            double dx = player.getX() - entity.getX();
-            double dy = player.getY() - entity.getY();
-            double dz = player.getZ() - entity.getZ();
-            double distance = dx * dx + dy * dy + dz * dz;
+            double distance = player.distanceToSqr(entity);
             if (distance < closestDistance) {
                 closestDistance = distance;
-                closestPlayer = player;
             }
         }
 
@@ -272,22 +267,33 @@ public class TickScheduler {
             data.stats.viewportCulledEntities++;
         }
 
-        // Occlusion culling
-        if (Config.getInstance().enableOcclusionCulling && closestPlayer != null && box.getSize() < 10 && closestDistance < Math.pow(Config.getInstance().occlusionCullingDistance - 1, 2) && data.cullingInstances.containsKey(closestPlayer.getId())) {
-            OcclusionCullingInstance cullingInstance = data.cullingInstances.get(closestPlayer.getId());
-            Vec3 eye = closestPlayer.getEyePosition();
+        // Occlusion culling (If no player within the culling distance can see the entity)
+        if (Config.getInstance().enableOcclusionCulling && box.getSize() < 10) {
+            boolean visible = false;
+            for (Player player : level.players()) {
+                double distance = player.distanceToSqr(entity);
+                if (distance < Math.pow(Config.getInstance().occlusionCullingDistance - 1, 2) && data.cullingInstances.containsKey(player.getId())) {
+                    OcclusionCullingInstance cullingInstance = data.cullingInstances.get(player.getId());
+                    Vec3 eye = player.getEyePosition();
 
-            minCorner.x = box.minX;
-            minCorner.y = box.minY;
-            minCorner.z = box.minZ;
-            maxCorner.x = box.maxX;
-            maxCorner.y = box.maxY;
-            maxCorner.z = box.maxZ;
-            eyePosition.x = eye.x;
-            eyePosition.y = eye.y;
-            eyePosition.z = eye.z;
+                    minCorner.x = box.minX;
+                    minCorner.y = box.minY;
+                    minCorner.z = box.minZ;
+                    maxCorner.x = box.maxX;
+                    maxCorner.y = box.maxY;
+                    maxCorner.z = box.maxZ;
+                    eyePosition.x = eye.x;
+                    eyePosition.y = eye.y;
+                    eyePosition.z = eye.z;
 
-            if (!cullingInstance.isAABBVisible(minCorner, maxCorner, eyePosition)) {
+                    if (cullingInstance.isAABBVisible(minCorner, maxCorner, eyePosition)) {
+                        visible = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!visible) {
                 blocksPerLevel = Math.min(blocksPerLevel, Config.getInstance().blocksPerLevelOcclusionCulled);
                 data.stats.occlusionCulledEntities++;
             }
