@@ -174,7 +174,7 @@ public class TickScheduler {
         // And assign a budget to each level
         for (LevelData data : levelData.values()) {
             double budget = Config.getInstance().entityTickBudget;
-            data.budget = budget > 0 ? (long) (budget * data.stats.entities / (totalEntities + 1) * 1_000_000) : 0;
+            data.budget = budget > 0 ? (long) (Math.max(0.1, (data.stats.entities + 1.0) / (totalEntities + 1.0)) * budget * 1_000_000) : 0;
         }
     }
 
