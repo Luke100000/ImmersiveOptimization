@@ -62,6 +62,7 @@ public final class Config extends JsonConfig {
     public Map<String, Boolean> entities = Map.of(
             "minecraft:player", false,
             "minecraft:ender_dragon", false,
-            "minecraft:arrow", false
+            "minecraft:arrow", false,
+            "fromanotherworld:starship", false
     );
 }
