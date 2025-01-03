@@ -55,7 +55,7 @@ public class Commands {
                         .then(toggle("enableBudget", enabled -> Config.getInstance().entityTickBudget = enabled ? (new Config()).entityTickBudget : 0))
                         .then(toggle("enabledStress", enabled -> Config.getInstance().stressedThreshold = enabled ? (new Config()).stressedThreshold : 0))
                         .then(LiteralArgumentBuilder.<CommandSourceStack>literal("blacklist")
-                                .then(RequiredArgumentBuilder.<CommandSourceStack, String>argument("id", StringArgumentType.string())
+                                .then(RequiredArgumentBuilder.<CommandSourceStack, String>argument("id", StringArgumentType.greedyString())
                                         .executes(context -> {
                                             String id = StringArgumentType.getString(context, "id");
                                             boolean state = Config.getInstance().entities.getOrDefault(id, true);

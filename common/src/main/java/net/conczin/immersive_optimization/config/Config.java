@@ -21,6 +21,9 @@ public final class Config extends JsonConfig {
         return 2;
     }
 
+    @SuppressWarnings("unused")
+    public String _documentation = "https://github.com/Luke100000/ImmersiveOptimization/blob/1.20.1/common/src/main/java/net/conczin/immersive_optimization/config/Config.java";
+
     // Enable the mod. If you plan to not use it altogether, uninstall it.
     public boolean enableEntities = true;
     public boolean enableBlockEntities = true;
@@ -62,7 +65,7 @@ public final class Config extends JsonConfig {
         dimensions.put("minecraft:the_end", true);
     }
 
-    // Or entities.
+    // Or entities. The blacklist accepts resource locations or namespaces (to blacklist an entire mod).
     public Map<String, Boolean> entities;
 
     {
