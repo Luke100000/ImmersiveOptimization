@@ -121,8 +121,9 @@ public class TickScheduler {
         }
 
         public String toLog() {
-            return "Rate %2.1f%%, %d stress, %d stressed, %d budgeted, culled %2.1f%% distance, %2.1f%% viewport".formatted(
+            return "Rate %2.1f%%, %d entities, %d stress, %d stressed, %d budgeted | culled %2.1f%% distance, %2.1f%% viewport".formatted(
                     previousStats.tickRate / previousStats.entities * 100,
+                    previousStats.entities,
                     stressedTicks,
                     lifeTimeStressedTicks,
                     lifeTimeBudgetTicks,
@@ -261,7 +262,7 @@ public class TickScheduler {
         if (!config.entities.getOrDefault(id.getNamespace(), true)) return 0;
 
         // Find the closest player
-        double minDistance = Double.MAX_VALUE;
+        double minDistance = 999999.0;
         for (Player player : level.players()) {
             minDistance = Math.min(minDistance, player.distanceToSqr(entity));
         }

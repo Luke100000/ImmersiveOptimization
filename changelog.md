@@ -3,6 +3,7 @@
 * Added blacklist and config reload commands
 * Updated default blacklist
 * Namespaces can now be blacklisted
+* Fixed issues when no players are nearby
 
 # 0.0.1
 
