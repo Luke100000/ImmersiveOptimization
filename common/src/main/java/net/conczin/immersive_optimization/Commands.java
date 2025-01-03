@@ -2,6 +2,7 @@ package net.conczin.immersive_optimization;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
@@ -53,6 +54,29 @@ public class Commands {
                         .then(toggle("enableViewportCulling", enabled -> Config.getInstance().enableViewportCulling = enabled))
                         .then(toggle("enableBudget", enabled -> Config.getInstance().entityTickBudget = enabled ? (new Config()).entityTickBudget : 0))
                         .then(toggle("enabledStress", enabled -> Config.getInstance().stressedThreshold = enabled ? (new Config()).stressedThreshold : 0))
+                        .then(LiteralArgumentBuilder.<CommandSourceStack>literal("blacklist")
+                                .then(RequiredArgumentBuilder.<CommandSourceStack, String>argument("id", StringArgumentType.string())
+                                        .executes(context -> {
+                                            String id = StringArgumentType.getString(context, "id");
+                                            boolean state = Config.getInstance().entities.getOrDefault(id, true);
+                                            Config.getInstance().entities.put(id, !state);
+                                            Config.getInstance().save();
+                                            if (state) {
+                                                send(context, "Added %s to blacklist!".formatted(id));
+                                            } else {
+                                                send(context, "Removed %s from blacklist!".formatted(id));
+                                            }
+                                            return 0;
+                                        })
+                                )
+                        )
+                        .then(LiteralArgumentBuilder.<CommandSourceStack>literal("reload")
+                                .executes(context -> {
+                                    Config.getInstance().reload();
+                                    send(context, "Config reloaded!");
+                                    return 0;
+                                })
+                        )
                 )
         );
     }

@@ -2,10 +2,11 @@ package net.conczin.immersive_optimization.config;
 
 import net.conczin.immersive_optimization.Constants;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public final class Config extends JsonConfig {
-    private static final Config INSTANCE = loadOrCreate(new Config(), Config.class);
+    private static Config INSTANCE = loadOrCreate(new Config(), Config.class);
 
     public Config() {
         super(Constants.MOD_ID);
@@ -52,17 +53,27 @@ public final class Config extends JsonConfig {
     public int stressedThreshold = 45;
 
     // Set to "false" to disable scheduling on given dimensions.
-    public Map<String, Boolean> dimensions = Map.of(
-            "minecraft:overworld", true,
-            "minecraft:the_nether", true,
-            "minecraft:the_end", true
-    );
+    public Map<String, Boolean> dimensions;
+
+    {
+        dimensions = new HashMap<>();
+        dimensions.put("minecraft:overworld", true);
+        dimensions.put("minecraft:the_nether", true);
+        dimensions.put("minecraft:the_end", true);
+    }
 
     // Or entities.
-    public Map<String, Boolean> entities = Map.of(
-            "minecraft:player", false,
-            "minecraft:ender_dragon", false,
-            "minecraft:arrow", false,
-            "fromanotherworld:starship", false
-    );
+    public Map<String, Boolean> entities;
+
+    {
+        entities = new HashMap<>();
+        entities.put("minecraft:player", false);
+        entities.put("minecraft:ender_dragon", false);
+        entities.put("minecraft:arrow", false);
+        entities.put("fromanotherworld:starship", false);
+    }
+
+    public void reload() {
+        INSTANCE = loadOrCreate(new Config(), Config.class);
+    }
 }
