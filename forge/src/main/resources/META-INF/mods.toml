@@ -12,6 +12,7 @@ logoFile = "icon.png" #optional (needs to be in the root of your mod jar (root o
 credits = "" #optional
 authors = "${mod_author}" #optional
 description = '''${description}''' #mandatory (Supports multiline text)
+displayTest="IGNORE_SERVER_VERSION"
 
 [[dependencies.${mod_id}]] #optional
 modId = "forge" #mandatory
