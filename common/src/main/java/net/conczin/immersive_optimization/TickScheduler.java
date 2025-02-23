@@ -151,7 +151,7 @@ public class TickScheduler {
 
         // Update level stress status
         int stressedThreshold = Config.getInstance().stressedThreshold;
-        boolean stressed = stressedThreshold > 0 && server.getAverageTickTime() > stressedThreshold;
+        boolean stressed = stressedThreshold > 0 && server.getAverageTickTimeNanos() > stressedThreshold * 1_000_000L;
         if (data.outOfBudget || stressed) {
             data.stressedTicks = Math.min(MAX_STRESS_TICKS, data.stressedTicks + 2);
             if (stressed) data.lifeTimeStressedTicks++;

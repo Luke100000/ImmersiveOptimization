@@ -22,7 +22,7 @@ public final class Config extends JsonConfig {
     }
 
     @SuppressWarnings("unused")
-    public String _documentation = "https://github.com/Luke100000/ImmersiveOptimization/blob/1.20.1/common/src/main/java/net/conczin/immersive_optimization/config/Config.java";
+    public String _documentation = "https://github.com/Luke100000/ImmersiveOptimization/blob/1.21.1/common/src/main/java/net/conczin/immersive_optimization/config/Config.java";
 
     // Enable the mod. If you plan to not use it altogether, uninstall it.
     public boolean enableEntities = true;

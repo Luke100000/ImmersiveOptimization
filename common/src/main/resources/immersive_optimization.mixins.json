@@ -3,7 +3,7 @@
   "minVersion": "0.8",
   "package": "net.conczin.immersive_optimization.mixin",
   "refmap": "${mod_id}.refmap.json",
-  "compatibilityLevel": "JAVA_17",
+  "compatibilityLevel": "JAVA_21",
   "mixins": [
     "EntityTickListAccessor",
     "LevelMixin",
