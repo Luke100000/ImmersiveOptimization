@@ -45,7 +45,7 @@ public final class Config extends JsonConfig {
     public int blocksPerLevelBlockEntities = 32;
 
     // When the budget is exceeded, the server will skip all remaining entities, and prioritize them next tick.
-    // This math may is slightly biased towards the end of the list.
+    // This math may be slightly biased towards the end of the list.
     // 0 to turn off.
     public double entityTickBudget = 30;
 

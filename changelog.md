@@ -1,3 +1,7 @@
+# 0.0.3
+
+* Fixed some warnings
+
 # 0.0.2
 
 * Added blacklist and config reload commands

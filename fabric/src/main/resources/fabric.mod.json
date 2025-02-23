@@ -21,7 +21,6 @@
     ]
   },
   "modmenu": [
-    "immersive_aircraft.config.ModMenuIntegration"
   ],
   "mixins": [
     "${mod_id}.mixins.json"
