@@ -85,12 +85,14 @@ public class TickScheduler {
         public double tickRate = 0;
         public int entities = 0;
         public int distanceCulledEntities = 0;
+        public int trackingCulledEntities = 0;
         public int viewportCulledEntities = 0;
 
         public void reset() {
             tickRate = 0;
             entities = 0;
             distanceCulledEntities = 0;
+            trackingCulledEntities = 0;
             viewportCulledEntities = 0;
         }
     }
@@ -121,13 +123,14 @@ public class TickScheduler {
         }
 
         public String toLog() {
-            return "Rate %2.1f%%, %d entities, %d stress, %d stressed, %d budgeted | culled %2.1f%% distance, %2.1f%% viewport".formatted(
+            return "Rate %2.1f%%, %d entities, %d stress, %d stressed, %d budgeted | culled %2.1f%% distance, %2.1f%% tracking, %2.1f%% viewport".formatted(
                     previousStats.tickRate / previousStats.entities * 100,
                     previousStats.entities,
                     stressedTicks,
                     lifeTimeStressedTicks,
                     lifeTimeBudgetTicks,
                     (float) previousStats.distanceCulledEntities / previousStats.entities * 100,
+                    (float) previousStats.trackingCulledEntities / previousStats.entities * 100,
                     (float) previousStats.viewportCulledEntities / previousStats.entities * 100
             );
         }
@@ -179,7 +182,7 @@ public class TickScheduler {
         }
     }
 
-    void tickLevel(Level level) {
+    void tickLevel(ServerLevel level) {
         LevelData data = levelData.computeIfAbsent(level.dimension().location(), LevelData::new);
         long tick = level.getGameTime();
 
@@ -253,7 +256,7 @@ public class TickScheduler {
         }
     }
 
-    public int getPriority(LevelData data, Level level, Entity entity) {
+    public int getPriority(LevelData data, ServerLevel level, Entity entity) {
         Config config = Config.getInstance();
 
         // Blacklist entities
@@ -270,16 +273,28 @@ public class TickScheduler {
         AABB box = entity.getBoundingBox();
         int blocksPerLevel = config.blocksPerLevel;
 
+        boolean integratedAndSinglePlayer = !level.getServer().isDedicatedServer() && level.players().size() == 1;
+
         // View distance culling
-        if (config.enableDistanceCulling && !entity.shouldRenderAtSqrDistance(minDistance)) {
+        if (config.enableDistanceCulling && integratedAndSinglePlayer && !entity.shouldRenderAtSqrDistance(minDistance)) {
             blocksPerLevel = config.blocksPerLevelDistanceCulled;
             data.stats.distanceCulledEntities++;
+        }
+
+        // Tracking distance culling
+        if (config.enableTrackingCulling && blocksPerLevel > config.blocksPerLevelTrackingCulled) {
+            int trackingRange = entity.getType().clientTrackingRange();
+            int scaledTrackingDistance = level.getServer().getScaledTrackingDistance(trackingRange * 16);
+            if (minDistance > scaledTrackingDistance * scaledTrackingDistance) {
+                blocksPerLevel = config.blocksPerLevelTrackingCulled;
+                data.stats.trackingCulledEntities++;
+            }
         }
 
         // Frustum culling (Only available for integrated servers)
         if (config.enableViewportCulling
             && blocksPerLevel > config.blocksPerLevelViewportCulled
-            && level.players().size() == 1
+            && integratedAndSinglePlayer
             && frustum != null
             && !frustum.isVisible(box)) {
             blocksPerLevel = config.blocksPerLevelViewportCulled;

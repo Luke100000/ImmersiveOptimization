@@ -22,15 +22,19 @@ public final class Config extends JsonConfig {
     }
 
     @SuppressWarnings("unused")
-    public String _documentation = "https://github.com/Luke100000/ImmersiveOptimization/blob/1.21.1/common/src/main/java/net/conczin/immersive_optimization/config/Config.java";
+    public String _documentation = "https://github.com/Luke100000/ImmersiveOptimization/wiki";
 
     // Enable the mod. If you plan to not use it altogether, uninstall it.
     public boolean enableEntities = true;
     public boolean enableBlockEntities = true;
 
-    // Distance culling reduces the tick rate of entities when not visible due to distance.
+    // Distance culling reduces the tick rate of entities when not visible due to render distance.
+    // (Singleplayer only)
     public boolean enableDistanceCulling = true;
+    // Tracking culling reduces the tick rate of entities when not tracked due to distance.
+    public boolean enableTrackingCulling = true;
     // Viewport culling slows down entities when outside the camera perspective.
+    // (Singleplayer only)
     public boolean enableViewportCulling = true;
 
     // Every blocksPerLevel, the tick rate will be reduced by 1, offset by initial minDistance to avoid visible glitches.
@@ -38,6 +42,7 @@ public final class Config extends JsonConfig {
     public int minDistance = 6;
     public int blocksPerLevel = 64;
     public int blocksPerLevelDistanceCulled = 10;
+    public int blocksPerLevelTrackingCulled = 10;
     public int blocksPerLevelViewportCulled = 20;
     public int maxLevel = 20;
 
@@ -74,6 +79,7 @@ public final class Config extends JsonConfig {
         entities.put("minecraft:ender_dragon", false);
         entities.put("minecraft:arrow", false);
         entities.put("fromanotherworld:starship", false);
+        entities.put("create", false);
     }
 
     public void reload() {
