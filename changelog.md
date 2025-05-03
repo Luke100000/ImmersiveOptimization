@@ -1,3 +1,9 @@
+# 0.0.4
+
+* Added culling by tracking distance
+* Made culling by render distance singleplayer only
+* Blacklisted Create by default
+
 # 0.0.3
 
 * Fixed some warnings
