@@ -74,6 +74,7 @@ public final class Config extends JsonConfig {
         entities.put("minecraft:ender_dragon", false);
         entities.put("minecraft:arrow", false);
         entities.put("fromanotherworld:starship", false);
+        entities.put("create", false);
     }
 
     public void reload() {
