@@ -1,4 +1,8 @@
-# 0.0.4
+# 0.0.6
+
+* Fixed more warnings
+
+# 0.0.4/5
 
 * Added culling by tracking distance
 * Made culling by render distance singleplayer only

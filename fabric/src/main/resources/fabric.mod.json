@@ -20,8 +20,6 @@
       "net.conczin.immersive_optimization.ImmersiveOptimization"
     ]
   },
-  "modmenu": [
-  ],
   "mixins": [
     "${mod_id}.mixins.json"
   ],
