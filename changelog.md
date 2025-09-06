@@ -1,3 +1,8 @@
+# 0.1.0
+
+* Removed budgeting mechanics (It causes unexpected behavior and has limited effect)
+* Move to GPL-3.0 License
+
 # 0.0.6
 
 * Fixed more warnings

@@ -53,7 +53,6 @@ public class Commands {
                         .then(toggle("enableDistanceCulling", enabled -> Config.getInstance().enableDistanceCulling = enabled))
                         .then(toggle("enableTrackingCulling", enabled -> Config.getInstance().enableTrackingCulling = enabled))
                         .then(toggle("enableViewportCulling", enabled -> Config.getInstance().enableViewportCulling = enabled))
-                        .then(toggle("enableBudget", enabled -> Config.getInstance().entityTickBudget = enabled ? (new Config()).entityTickBudget : 0))
                         .then(toggle("enabledStress", enabled -> Config.getInstance().stressedThreshold = enabled ? (new Config()).stressedThreshold : 0))
                         .then(LiteralArgumentBuilder.<CommandSourceStack>literal("blacklist")
                                 .then(RequiredArgumentBuilder.<CommandSourceStack, String>argument("id", StringArgumentType.greedyString())

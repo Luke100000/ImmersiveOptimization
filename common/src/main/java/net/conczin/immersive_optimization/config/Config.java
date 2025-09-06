@@ -49,11 +49,6 @@ public final class Config extends JsonConfig {
     // The same for block entities, but without further culling.
     public int blocksPerLevelBlockEntities = 32;
 
-    // When the budget is exceeded, the server will skip all remaining entities, and prioritize them next tick.
-    // This math may be slightly biased towards the end of the list.
-    // 0 to turn off.
-    public double entityTickBudget = 30;
-
     // The ms of total server tick time before the server is considered stressed.
     // When stressed, the server will gradually increase the blockedPerLevel.
     // This may increase visual glitches with clients and is a last resort to avoid lag.
