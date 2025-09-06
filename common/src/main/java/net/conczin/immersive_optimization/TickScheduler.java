@@ -252,7 +252,7 @@ public class TickScheduler {
         }
 
         // Assign an optimization level
-        double antiStress = 1.0 - (double) data.stressedTicks / MAX_STRESS_TICKS;
+        double antiStress = 1.0 - (double) data.stressedTicks / MAX_STRESS_TICKS * config.minDecreaseFactor;
         int finalBlocksPerLevel = (int) (blocksPerLevel * antiStress);
         int distanceLevel = (int) ((Math.sqrt(minDistance) - config.minDistance) / Math.max(2, finalBlocksPerLevel));
 
