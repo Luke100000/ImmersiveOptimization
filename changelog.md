@@ -2,6 +2,7 @@
 
 * Removed budgeting mechanics (It causes unexpected behavior and has limited effect)
 * Move to GPL-3.0 License
+* Add Valkyrion skies and ender pearl to blacklist
 
 # 0.0.6
 

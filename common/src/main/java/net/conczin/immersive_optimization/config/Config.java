@@ -70,11 +70,16 @@ public final class Config extends JsonConfig {
 
     {
         entities = new HashMap<>();
+
         entities.put("minecraft:player", false);
         entities.put("minecraft:ender_dragon", false);
         entities.put("minecraft:arrow", false);
+        entities.put("minecraft:ender_pearl", false);
+
         entities.put("fromanotherworld:starship", false);
+
         entities.put("create", false);
+        entities.put("valkyrienskies", false);
     }
 
     public void reload() {
