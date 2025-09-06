@@ -275,6 +275,11 @@ public class TickScheduler {
     private int getBlockEntityPriority(Level level, long p) {
         int x = ChunkPos.getX(p);
         int z = ChunkPos.getZ(p);
+
+        if (x < -300000 || x > 300000 || z < -300000 || z > 300000) {
+            return -1;
+        }
+
         double minDistance = Double.MAX_VALUE;
         for (Player player : level.players()) {
             double dx = SectionPos.blockToSectionCoord(player.getX()) - x;
