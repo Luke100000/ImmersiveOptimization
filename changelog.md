@@ -1,4 +1,12 @@
-# 0.0.4
+# 0.1.0
+
+* Removed budgeting mechanics (It causes unexpected behavior and has limited effect)
+* Move to GPL-3.0 License
+* Added combat with Valkyrion Skies
+* Add Valkyrion Skies and ender pearl to blacklist
+* Fixed more warnings
+
+# 0.0.4/5
 
 * Added culling by tracking distance
 * Made culling by render distance singleplayer only

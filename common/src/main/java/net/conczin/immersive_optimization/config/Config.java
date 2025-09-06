@@ -49,16 +49,12 @@ public final class Config extends JsonConfig {
     // The same for block entities, but without further culling.
     public int blocksPerLevelBlockEntities = 32;
 
-    // When the budget is exceeded, the server will skip all remaining entities, and prioritize them next tick.
-    // This math may be slightly biased towards the end of the list.
-    // 0 to turn off.
-    public double entityTickBudget = 30;
-
-    // The ms of total server tick time before the server is considered stressed.
-    // When stressed, the server will gradually increase the blockedPerLevel.
+    // The ms of the total server tick time before the server is considered stressed.
+    // When stressed, the server will gradually increase the blockedPerLevel by at least minDecreaseFactor.
     // This may increase visual glitches with clients and is a last resort to avoid lag.
     // 0 to turn off.
     public int stressedThreshold = 45;
+    public float minDecreaseFactor = 0.25f;
 
     // Set to "false" to disable scheduling on given dimensions.
     public Map<String, Boolean> dimensions;
@@ -75,11 +71,16 @@ public final class Config extends JsonConfig {
 
     {
         entities = new HashMap<>();
+
         entities.put("minecraft:player", false);
         entities.put("minecraft:ender_dragon", false);
         entities.put("minecraft:arrow", false);
+        entities.put("minecraft:ender_pearl", false);
+
         entities.put("fromanotherworld:starship", false);
+
         entities.put("create", false);
+        entities.put("valkyrienskies", false);
     }
 
     public void reload() {
