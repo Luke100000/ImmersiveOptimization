@@ -12,6 +12,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
@@ -213,6 +214,7 @@ public class TickScheduler {
         ResourceLocation id = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
         if (!config.entities.getOrDefault(id.toString(), true)) return 0;
         if (!config.entities.getOrDefault(id.getNamespace(), true)) return 0;
+        if (!config.cullProjectiles && entity instanceof Projectile) return 0;
 
         // Find the closest player
         double minDistance = 999999.0;

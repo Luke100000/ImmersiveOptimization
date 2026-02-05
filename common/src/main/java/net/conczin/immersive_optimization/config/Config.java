@@ -74,6 +74,7 @@ public final class Config extends JsonConfig {
 
         entities.put("minecraft:player", false);
         entities.put("minecraft:ender_dragon", false);
+
         entities.put("minecraft:arrow", false);
         entities.put("minecraft:ender_pearl", false);
 
@@ -82,6 +83,9 @@ public final class Config extends JsonConfig {
         entities.put("create", false);
         entities.put("valkyrienskies", false);
     }
+
+    // Projectiles are often client-side predicted, so culling them may cause glitches.
+    public boolean cullProjectiles = false;
 
     public void reload() {
         INSTANCE = loadOrCreate(new Config(), Config.class);

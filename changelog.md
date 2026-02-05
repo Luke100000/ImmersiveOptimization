@@ -1,3 +1,7 @@
+# 0.1.1
+
+* Projectiles are no longer culled (configurable)
+
 # 0.1.0
 
 * Removed budgeting mechanics (It causes unexpected behavior and has limited effect)
