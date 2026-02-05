@@ -12,7 +12,6 @@
     "ServerLevelMixin"
   ],
   "client": [
-    "client.DebugHudMixin",
     "client.LevelRendererMixin"
   ],
   "server": [

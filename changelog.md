@@ -1,6 +1,7 @@
 # 0.1.1
 
 * Projectiles are no longer culled (configurable)
+* Ported to Minecraft 1.21.11
 
 # 0.1.0
 

@@ -7,7 +7,7 @@ import net.conczin.immersive_optimization.mixin.EntityTickListAccessor;
 import net.conczin.immersive_optimization.mixin.ServerLevelAccessor;
 import net.minecraft.core.SectionPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
@@ -111,8 +111,8 @@ public class TickScheduler {
         public Map<Long, Integer> blockEntityPriorities = new ConcurrentHashMap<>();
 
 
-        public LevelData(ResourceLocation location) {
-            active = Config.getInstance().dimensions.getOrDefault(location.toString(), true);
+        public LevelData(Identifier identifier) {
+            active = Config.getInstance().dimensions.getOrDefault(identifier.toString(), true);
         }
 
         public String toLog() {
@@ -128,11 +128,11 @@ public class TickScheduler {
         }
     }
 
-    public final Map<ResourceLocation, LevelData> levelData = new ConcurrentHashMap<>();
+    public final Map<Identifier, LevelData> levelData = new ConcurrentHashMap<>();
 
     @Nullable
     public LevelData getLevelData(Level level) {
-        return levelData.get(level.dimension().location());
+        return levelData.get(level.dimension().identifier());
     }
 
     public void reset() {
@@ -159,7 +159,7 @@ public class TickScheduler {
     }
 
     void tickLevel(ServerLevel level) {
-        LevelData data = levelData.computeIfAbsent(level.dimension().location(), LevelData::new);
+        LevelData data = levelData.computeIfAbsent(level.dimension().identifier(), LevelData::new);
         long tick = level.getGameTime();
 
         Stats previousStats = data.previousStats;
@@ -196,7 +196,7 @@ public class TickScheduler {
     }
 
     public boolean shouldTick(Entity entity) {
-        if (entity.noCulling || INSTANCE == null) return true;
+        if (entity.isAlwaysTicking() || INSTANCE == null) return true;
 
         LevelData data = getLevelData(entity.level());
         if (data == null) return true;
@@ -211,7 +211,7 @@ public class TickScheduler {
         Config config = Config.getInstance();
 
         // Blacklist entities
-        ResourceLocation id = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
+        Identifier id = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
         if (!config.entities.getOrDefault(id.toString(), true)) return 0;
         if (!config.entities.getOrDefault(id.getNamespace(), true)) return 0;
         if (!config.cullProjectiles && entity instanceof Projectile) return 0;

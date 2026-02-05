@@ -54,7 +54,6 @@ jobs:
             fabric
           game-versions: |
             ${{steps.split.outputs._1}}
-            1.21.1
           java: |
             Java 21
           dependencies: |
@@ -78,7 +77,6 @@ jobs:
             forge
           game-versions: |
             ${{steps.split.outputs._1}}
-            1.21.1
           java: |
             Java 21
 
@@ -100,7 +98,6 @@ jobs:
             neoforge
           game-versions: |
             ${{steps.split.outputs._1}}
-            1.21.1
           java: |
             Java 21
 
