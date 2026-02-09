@@ -1,6 +1,7 @@
 # 0.1.2
 
 * Fixed config file creation
+* Fixed Fabric dedicated server crash
 
 # 0.1.1
 

@@ -18,6 +18,9 @@
   "entrypoints": {
     "main": [
       "net.conczin.immersive_optimization.ImmersiveOptimization"
+    ],
+    "client": [
+      "net.conczin.immersive_optimization.ImmersiveOptimizationClient"
     ]
   },
   "mixins": [
