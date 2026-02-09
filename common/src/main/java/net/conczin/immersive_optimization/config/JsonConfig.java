@@ -29,7 +29,10 @@ public class JsonConfig {
     }
 
     public void save() {
-        try (FileWriter writer = new FileWriter(getConfigFile(name))) {
+        File file = getConfigFile(name);
+        //noinspection ResultOfMethodCallIgnored
+        file.getParentFile().mkdirs();
+        try (FileWriter writer = new FileWriter(file)) {
             version = getVersion();
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
             gson.toJson(this, writer);
@@ -40,8 +43,9 @@ public class JsonConfig {
 
     public static <T extends JsonConfig> T loadOrCreate(T defaultConfig, Class<T> jsonClass) {
         String name = defaultConfig.name;
-        if (getConfigFile(name).exists()) {
-            try (FileReader reader = new FileReader(getConfigFile(name))) {
+        File file = getConfigFile(name);
+        if (file.exists()) {
+            try (FileReader reader = new FileReader(file)) {
                 Gson gson = new GsonBuilder().setPrettyPrinting().create();
                 T config = gson.fromJson(reader, jsonClass);
                 if (config.version != config.getVersion()) {

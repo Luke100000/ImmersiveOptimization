@@ -1,3 +1,7 @@
+# 0.1.2
+
+* Fixed config file creation
+
 # 0.1.1
 
 * Projectiles are no longer culled (configurable)
