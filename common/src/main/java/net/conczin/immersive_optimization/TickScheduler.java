@@ -61,7 +61,7 @@ public class TickScheduler {
             while (server.isRunning()) {
                 try {
                     // Tick levels
-                    for (ServerLevel level : server.getAllLevels()) {
+                    for (ServerLevel level : scheduler.knownLevels.values()) {
                         scheduler.tickLevel(level);
                     }
 
@@ -129,6 +129,7 @@ public class TickScheduler {
     }
 
     public final Map<Identifier, LevelData> levelData = new ConcurrentHashMap<>();
+    public final Map<Identifier, ServerLevel> knownLevels = new ConcurrentHashMap<>();
 
     @Nullable
     public LevelData getLevelData(Level level) {
@@ -137,10 +138,13 @@ public class TickScheduler {
 
     public void reset() {
         levelData.clear();
+        knownLevels.clear();
         frustum = null;
     }
 
     public void startLevelTick(ServerLevel level) {
+        knownLevels.put(level.dimension().identifier(), level);
+
         LevelData data = getLevelData(level);
         if (data == null) return;
 
