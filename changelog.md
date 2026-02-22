@@ -1,3 +1,7 @@
+# 0.1.3
+
+* Added WorldThreader support (Thanks runningbird2!)
+
 # 0.1.2
 
 * Fixed config file creation
