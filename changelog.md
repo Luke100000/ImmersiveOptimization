@@ -1,6 +1,7 @@
-# 0.1.1
+# 0.1.4
 
 * Added permission levels to commands
+* /io report no longer prints inactive dimensions
 
 # 0.1.0
 

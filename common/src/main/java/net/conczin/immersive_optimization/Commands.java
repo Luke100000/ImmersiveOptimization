@@ -22,8 +22,11 @@ public class Commands {
                         .executes(context -> {
                             StringBuilder sb = new StringBuilder();
                             sb.append("§l§a[Immersive Optimization Report]§r\n");
-                            TickScheduler.INSTANCE.levelData.forEach((key, data) ->
-                                    sb.append("%s: %s\n".formatted(key.getPath(), data.toLog())));
+                            TickScheduler.INSTANCE.levelData.forEach((key, data) -> {
+                                if (data.getEntities() > 0) {
+                                    sb.append("%s: %s\n".formatted(key.getPath(), data.toLog()));
+                                }
+                            });
                             send(context, sb.toString());
                             return 0;
                         })
