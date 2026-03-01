@@ -17,7 +17,7 @@ import java.util.function.Consumer;
 public class Commands {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(LiteralArgumentBuilder.<CommandSourceStack>literal("io")
-                .requires(source -> source.hasPermission(4))
+                .requires(net.minecraft.commands.Commands.hasPermission(net.minecraft.commands.Commands.LEVEL_OWNERS))
                 .then(LiteralArgumentBuilder.<CommandSourceStack>literal("report")
                         .executes(context -> {
                             StringBuilder sb = new StringBuilder();
