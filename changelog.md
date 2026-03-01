@@ -1,3 +1,7 @@
+# 0.1.1
+
+* Added permission levels to commands
+
 # 0.1.0
 
 * Removed budgeting mechanics (It causes unexpected behavior and has limited effect)
