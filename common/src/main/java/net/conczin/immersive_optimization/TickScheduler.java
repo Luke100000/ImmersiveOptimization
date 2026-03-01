@@ -110,9 +110,12 @@ public class TickScheduler {
 
         public Map<Long, Integer> blockEntityPriorities = new ConcurrentHashMap<>();
 
-
         public LevelData(Identifier identifier) {
             active = Config.getInstance().dimensions.getOrDefault(identifier.toString(), true);
+        }
+
+        public int getEntities() {
+            return previousStats.entities;
         }
 
         public String toLog() {
