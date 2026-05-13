@@ -1,3 +1,7 @@
+# 0.1.5
+
+* Fixed rare concurrent access crashes
+
 # 0.1.4
 
 * Added permission levels to commands

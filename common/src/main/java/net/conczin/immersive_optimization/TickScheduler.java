@@ -105,7 +105,7 @@ public class TickScheduler {
         public int stressedTicks = 0;
         public int lifeTimeStressedTicks = 0;
 
-        public Int2IntOpenHashMap priorities = new Int2IntOpenHashMap();
+        public volatile Int2IntOpenHashMap priorities = new Int2IntOpenHashMap();
 
         public Map<Long, Integer> blockEntityPriorities = new ConcurrentHashMap<>();
 
@@ -176,7 +176,7 @@ public class TickScheduler {
 
         // Entity culling disabled
         if (!Config.getInstance().enableEntities) {
-            data.priorities.clear();
+            data.priorities = new Int2IntOpenHashMap();
             return;
         }
 
