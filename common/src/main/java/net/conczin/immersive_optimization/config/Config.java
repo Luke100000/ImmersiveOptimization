@@ -26,7 +26,9 @@ public final class Config extends JsonConfig {
 
     // Enable the mod. If you plan to not use it altogether, uninstall it.
     public boolean enableEntities = true;
-    public boolean enableBlockEntities = true;
+
+    // Enable block entity optimization. A handful of mods, such as Create or Ad Astras logistics, may glitch.
+    public boolean enableBlockEntities = false;
 
     // Slow down entities and block entities in force-loaded chunks.
     public boolean optimizeForceLoadedChunks = false;

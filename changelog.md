@@ -2,6 +2,7 @@
 
 * Fixed rare concurrent access crashes
 * Support force-loaded chunks
+* Disabled block entity optimization by default since it causes too many issues
 
 # 0.1.4
 
