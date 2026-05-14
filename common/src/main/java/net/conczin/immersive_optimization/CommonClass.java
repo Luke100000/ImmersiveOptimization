@@ -1,3 +1,5 @@
+package net.conczin.immersive_optimization;
+
 import net.minecraft.server.level.ServerLevel;
 
 public class CommonClass {
@@ -5,7 +7,7 @@ public class CommonClass {
         // No-op
     }
 
-    public static ForcedChunkLookup forcedChunkLookup = (level, chunk) -> level.getForcedChunks().contains(chunk);
+    public static ForcedChunkLookup forcedChunkLookup = (level, chunk) -> level.getForceLoadedChunks().contains(chunk);
 
     public static boolean isForceLoaded(ServerLevel level, long chunk) {
         return forcedChunkLookup.isForced(level, chunk);
