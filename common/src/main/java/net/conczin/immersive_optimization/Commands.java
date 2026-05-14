@@ -54,6 +54,7 @@ public class Commands {
                         )
                         .then(toggle("enableEntities", enabled -> Config.getInstance().enableEntities = enabled))
                         .then(toggle("enableBlockEntities", enabled -> Config.getInstance().enableBlockEntities = enabled))
+                        .then(toggle("optimizeForceLoadedChunks", enabled -> Config.getInstance().optimizeForceLoadedChunks = enabled))
                         .then(toggle("enableDistanceCulling", enabled -> Config.getInstance().enableDistanceCulling = enabled))
                         .then(toggle("enableTrackingCulling", enabled -> Config.getInstance().enableTrackingCulling = enabled))
                         .then(toggle("enableViewportCulling", enabled -> Config.getInstance().enableViewportCulling = enabled))

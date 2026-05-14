@@ -5,6 +5,7 @@ import net.neoforged.fml.common.Mod;
 @Mod(Constants.MOD_ID)
 public class ImmersiveOptimization {
     public ImmersiveOptimization() {
-        // NOP
+        CommonClass.forcedChunkLookup = new NeoForgeForcedChunkLookup();
+        CommonClass.init();
     }
 }
