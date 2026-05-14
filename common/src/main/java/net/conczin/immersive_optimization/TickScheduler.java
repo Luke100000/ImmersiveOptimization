@@ -278,9 +278,6 @@ public class TickScheduler {
         if (data == null) {
             return true;
         }
-        if (isForceLoaded(level, pos)) {
-            return true;
-        }
         int priority = data.blockEntityPriorities.computeIfAbsent(pos, p -> this.getBlockEntityPriority(level, p));
         return priority < 1 || (level.getGameTime() + pos) % priority == 0;
     }
@@ -290,6 +287,10 @@ public class TickScheduler {
     }
 
     private int getBlockEntityPriority(Level level, long p) {
+        if (isForceLoaded(level, p)) {
+            return 0;
+        }
+
         int x = ChunkPos.getX(p);
         int z = ChunkPos.getZ(p);
 
