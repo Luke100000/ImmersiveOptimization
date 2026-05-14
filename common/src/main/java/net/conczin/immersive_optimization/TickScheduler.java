@@ -216,6 +216,7 @@ public class TickScheduler {
         ResourceLocation id = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
         if (!config.entities.getOrDefault(id.toString(), true)) return 0;
         if (!config.entities.getOrDefault(id.getNamespace(), true)) return 0;
+        if (isForceLoaded(level, entity.chunkPosition().toLong())) return 0;
 
         // Find the closest player
         double minDistance = 999999.0;
@@ -271,8 +272,15 @@ public class TickScheduler {
         if (data == null) {
             return true;
         }
+        if (isForceLoaded(level, pos)) {
+            return true;
+        }
         int priority = data.blockEntityPriorities.computeIfAbsent(pos, p -> this.getBlockEntityPriority(level, p));
         return priority < 1 || (level.getGameTime() + pos) % priority == 0;
+    }
+
+    private boolean isForceLoaded(Level level, long chunk) {
+        return !Config.getInstance().optimizeForceLoadedChunks && level instanceof ServerLevel serverLevel && CommonClass.isForceLoaded(serverLevel, chunk);
     }
 
     private int getBlockEntityPriority(Level level, long p) {

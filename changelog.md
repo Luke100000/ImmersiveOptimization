@@ -1,6 +1,7 @@
 # 0.1.5
 
 * Fixed rare concurrent access crashes
+* Support force-loaded chunks
 
 # 0.1.4
 
