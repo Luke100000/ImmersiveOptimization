@@ -222,7 +222,7 @@ public class TickScheduler {
         if (!config.entities.getOrDefault(id.toString(), true)) return 0;
         if (!config.entities.getOrDefault(id.getNamespace(), true)) return 0;
         if (!config.cullProjectiles && entity instanceof Projectile) return 0;
-        if (isForceLoaded(level, entity.chunkPosition().toLong())) return 0;
+        if (isForceLoaded(level, entity.chunkPosition().pack())) return 0;
 
         // Find the closest player
         double minDistance = 999999.0;

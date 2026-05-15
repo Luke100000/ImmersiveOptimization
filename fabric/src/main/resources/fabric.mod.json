@@ -27,12 +27,11 @@
     "${mod_id}.mixins.json"
   ],
   "depends": {
-    "fabricloader": ">=0.14",
-    "fabric": "*",
+    "fabricloader": "${fabric_loader_version_range}",
+    "fabric-api": "${fabric_api_version_range}",
     "minecraft": ">=${minecraft_version}",
-    "java": ">=21"
+    "java": ">=25"
   },
   "suggests": {
   }
 }
-  
