@@ -28,11 +28,9 @@ public class TickScheduler {
     public static final int MAX_STRESS_TICKS = 600;
     public static final int CLEAR_BLOCK_ENTITIES_INTERVAL = 207;
 
-    public MinecraftServer server;
     public FrustumProxy frustum;
 
     public static void setServer(MinecraftServer server) {
-        INSTANCE.server = server;
         INSTANCE.reset();
 
         // Offload the "heavy" lifting to a separate thread
@@ -148,7 +146,7 @@ public class TickScheduler {
 
         // Update level stress status
         int stressedThreshold = Config.getInstance().stressedThreshold;
-        boolean stressed = stressedThreshold > 0 && server.getAverageTickTime() > stressedThreshold;
+        boolean stressed = stressedThreshold > 0 && level.getServer().getAverageTickTime() > stressedThreshold;
         if (stressed) {
             data.stressedTicks = Math.min(MAX_STRESS_TICKS, data.stressedTicks + 2);
             data.lifeTimeStressedTicks++;
