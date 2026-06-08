@@ -1,3 +1,7 @@
+# 0.1.6
+
+* Clean up after the server shuts down
+
 # 0.1.5
 
 * Fixed rare concurrent access crashes
