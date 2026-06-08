@@ -37,3 +37,9 @@ neoForge {
 }
 
 sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+processResources {
+    filesMatching("${mod_id}.mixins.json") {
+        filter { line -> line.contains('"refmap":') ? null : line }
+    }
+}
