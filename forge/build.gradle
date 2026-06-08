@@ -93,6 +93,13 @@ tasks.named("sourcesJar", Jar) {
 
 processResources {
     from project(":common").sourceSets.main.resources
+    from(tasks.named("compileJava").map { it.temporaryDir }) {
+        include "${mod_id}.refmap.json"
+    }
+}
+
+tasks.named("jar", Jar) {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 jar.finalizedBy('reobfJar')
