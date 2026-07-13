@@ -1,5 +1,6 @@
-# 0.1.7
+# 0.2.0
 
+* Added tags and * to blacklist
 * Improved performance
 
 # 0.1.6

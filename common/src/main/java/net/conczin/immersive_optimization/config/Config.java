@@ -1,9 +1,16 @@
 package net.conczin.immersive_optimization.config;
 
 import net.conczin.immersive_optimization.Constants;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.entity.EntityType;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class Config extends JsonConfig {
     private static Config INSTANCE = loadOrCreate(new Config(), Config.class);
@@ -71,21 +78,80 @@ public final class Config extends JsonConfig {
         dimensions.put("minecraft:the_end", true);
     }
 
-    // Or entities. The blacklist accepts resource locations or namespaces (to blacklist an entire mod).
+    // Or entities. Rules accept resource locations, #tags, namespaces, or "*" and are checked in that order.
+    // True whitelists matching entities, false blacklists them. Smaller matching tags take priority.
     public Map<String, Boolean> entities;
+
+    private final transient Map<ResourceLocation, Boolean> entityBlacklistCache = new ConcurrentHashMap<>();
 
     {
         entities = new HashMap<>();
 
         entities.put("minecraft:player", false);
         entities.put("minecraft:ender_dragon", false);
-        entities.put("minecraft:arrow", false);
         entities.put("minecraft:ender_pearl", false);
 
         entities.put("fromanotherworld:starship", false);
 
         entities.put("create", false);
         entities.put("valkyrienskies", false);
+
+        entities.put("#minecraft:arrows", false);
+
+        entities.put("*", true);
+    }
+
+    public boolean isBlacklisted(EntityType<?> entityType) {
+        ResourceLocation id = BuiltInRegistries.ENTITY_TYPE.getKey(entityType);
+        Boolean cached = entityBlacklistCache.get(id);
+        if (cached != null) {
+            return cached;
+        }
+
+        synchronized (this) {
+            return entityBlacklistCache.computeIfAbsent(id, ignored -> resolveBlacklist(entityType, id));
+        }
+    }
+
+    private boolean resolveBlacklist(EntityType<?> entityType, ResourceLocation id) {
+        // Lookup id
+        Boolean enabled = entities.get(id.toString());
+        if (enabled != null) return !enabled;
+
+        // Lookup tags
+        enabled = BuiltInRegistries.ENTITY_TYPE.wrapAsHolder(entityType).tags()
+                .filter(tag -> entities.containsKey("#" + tag.location()))
+                .sorted(Comparator
+                        .comparingInt(this::getTagSize)
+                        .thenComparing(tag -> tag.location().toString()))
+                .map(tag -> entities.get("#" + tag.location()))
+                .findFirst()
+                .orElse(null);
+        if (enabled != null) return !enabled;
+
+        // Lookup namespace
+        enabled = entities.get(id.getNamespace());
+        if (enabled != null) return !enabled;
+
+        // Default
+        return !entities.getOrDefault("*", true);
+    }
+
+    private int getTagSize(TagKey<EntityType<?>> tag) {
+        return BuiltInRegistries.ENTITY_TYPE.getTag(tag).orElseThrow().size();
+    }
+
+    public synchronized boolean toggleEntityRule(String id, boolean enabled) {
+        boolean added;
+        if (Objects.equals(entities.get(id), enabled)) {
+            entities.remove(id);
+            added = false;
+        } else {
+            entities.put(id, enabled);
+            added = true;
+        }
+        entityBlacklistCache.clear();
+        return added;
     }
 
     public void reload() {

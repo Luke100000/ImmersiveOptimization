@@ -8,7 +8,6 @@ import net.conczin.immersive_optimization.config.Config;
 import net.conczin.immersive_optimization.mixin.EntityTickListAccessor;
 import net.conczin.immersive_optimization.mixin.ServerLevelAccessor;
 import net.minecraft.core.SectionPos;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -226,9 +225,7 @@ public class TickScheduler {
         Config config = Config.getInstance();
 
         // Blacklist entities
-        ResourceLocation id = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
-        if (!config.entities.getOrDefault(id.toString(), true)) return 0;
-        if (!config.entities.getOrDefault(id.getNamespace(), true)) return 0;
+        if (config.isBlacklisted(entity.getType())) return 0;
         if (data.forcedChunks.contains(entity.chunkPosition().toLong())) return 0;
 
         // Find the closest player

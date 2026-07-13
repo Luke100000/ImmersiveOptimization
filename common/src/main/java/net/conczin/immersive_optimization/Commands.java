@@ -59,22 +59,8 @@ public class Commands {
                         .then(toggle("enableTrackingCulling", enabled -> Config.getInstance().enableTrackingCulling = enabled))
                         .then(toggle("enableViewportCulling", enabled -> Config.getInstance().enableViewportCulling = enabled))
                         .then(toggle("enabledStress", enabled -> Config.getInstance().stressedThreshold = enabled ? (new Config()).stressedThreshold : 0))
-                        .then(LiteralArgumentBuilder.<CommandSourceStack>literal("blacklist")
-                                .then(RequiredArgumentBuilder.<CommandSourceStack, String>argument("id", StringArgumentType.greedyString())
-                                        .executes(context -> {
-                                            String id = StringArgumentType.getString(context, "id");
-                                            boolean state = Config.getInstance().entities.getOrDefault(id, true);
-                                            Config.getInstance().entities.put(id, !state);
-                                            Config.getInstance().save();
-                                            if (state) {
-                                                send(context, "Added %s to blacklist!".formatted(id));
-                                            } else {
-                                                send(context, "Removed %s from blacklist!".formatted(id));
-                                            }
-                                            return 0;
-                                        })
-                                )
-                        )
+                        .then(entityRule("blacklist", false))
+                        .then(entityRule("whitelist", true))
                         .then(LiteralArgumentBuilder.<CommandSourceStack>literal("reload")
                                 .executes(context -> {
                                     Config.getInstance().reload();
@@ -106,6 +92,22 @@ public class Commands {
                             TickScheduler.INSTANCE.reset();
                             Config.getInstance().save();
                             send(context, "Config updated!");
+                            return 0;
+                        })
+                );
+    }
+
+    private static ArgumentBuilder<CommandSourceStack, ?> entityRule(String name, boolean enabled) {
+        return LiteralArgumentBuilder.<CommandSourceStack>literal(name)
+                .then(RequiredArgumentBuilder.<CommandSourceStack, String>argument("id", StringArgumentType.greedyString())
+                        .executes(context -> {
+                            String id = StringArgumentType.getString(context, "id");
+                            Config config = Config.getInstance();
+                            boolean added = config.toggleEntityRule(id, enabled);
+                            config.save();
+                            send(context, added
+                                    ? "Added %s to %s!".formatted(id, name)
+                                    : "Removed %s from %s!".formatted(id, name));
                             return 0;
                         })
                 );
