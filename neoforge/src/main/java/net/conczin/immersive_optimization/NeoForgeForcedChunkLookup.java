@@ -1,5 +1,6 @@
 package net.conczin.immersive_optimization;
 
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ForcedChunksSavedData;
@@ -9,29 +10,27 @@ import java.util.Map;
 
 public class NeoForgeForcedChunkLookup implements CommonClass.ForcedChunkLookup {
     @Override
-    public boolean isForced(ServerLevel level, long chunk) {
-        if (level.getForcedChunks().contains(chunk)) {
-            return true;
-        }
+    public LongSet getForcedChunks(ServerLevel level) {
+        LongSet chunks = new LongOpenHashSet(level.getForcedChunks());
 
         ForcedChunksSavedData data = level.getDataStorage().get(ForcedChunksSavedData.factory(), "chunks");
         if (data == null) {
-            return false;
+            return chunks;
         }
 
-        return contains(data.getBlockForcedChunks(), chunk) || contains(data.getEntityForcedChunks(), chunk);
+        addAll(chunks, data.getBlockForcedChunks());
+        addAll(chunks, data.getEntityForcedChunks());
+        return chunks;
     }
 
-    private static <T extends Comparable<? super T>> boolean contains(ForcedChunkManager.TicketTracker<T> tracker, long chunk) {
-        return contains(tracker.getChunks(), chunk) || contains(tracker.getTickingChunks(), chunk);
+    private static <T extends Comparable<? super T>> void addAll(LongSet chunks, ForcedChunkManager.TicketTracker<T> tracker) {
+        addAll(chunks, tracker.getChunks());
+        addAll(chunks, tracker.getTickingChunks());
     }
 
-    private static boolean contains(Map<?, LongSet> tickets, long chunk) {
-        for (LongSet chunks : tickets.values()) {
-            if (chunks.contains(chunk)) {
-                return true;
-            }
+    private static void addAll(LongSet chunks, Map<?, LongSet> tickets) {
+        for (LongSet ticketChunks : tickets.values()) {
+            chunks.addAll(ticketChunks);
         }
-        return false;
     }
 }

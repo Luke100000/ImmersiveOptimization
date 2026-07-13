@@ -2,11 +2,12 @@ package net.conczin.immersive_optimization;
 
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.longs.LongSet;
+import it.unimi.dsi.fastutil.longs.LongSets;
 import net.conczin.immersive_optimization.config.Config;
 import net.conczin.immersive_optimization.mixin.EntityTickListAccessor;
 import net.conczin.immersive_optimization.mixin.ServerLevelAccessor;
 import net.minecraft.core.SectionPos;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -105,6 +106,7 @@ public class TickScheduler {
         public int lifeTimeStressedTicks = 0;
 
         public volatile Int2IntOpenHashMap priorities = new Int2IntOpenHashMap();
+        public volatile LongSet forcedChunks = LongSets.EMPTY_SET;
 
         public Map<Long, Integer> blockEntityPriorities = new ConcurrentHashMap<>();
 
@@ -131,6 +133,10 @@ public class TickScheduler {
 
     public final Map<ResourceLocation, LevelData> levelData = new ConcurrentHashMap<>();
 
+    // Can be cached
+    private ResourceLocation currentTickDimension;
+    private LevelData currentTickLevelData;
+
     @Nullable
     public LevelData getLevelData(Level level) {
         return levelData.get(level.dimension().location());
@@ -138,11 +144,15 @@ public class TickScheduler {
 
     public void reset() {
         levelData.clear();
+        currentTickDimension = null;
+        currentTickLevelData = null;
         frustum = null;
     }
 
     public void startLevelTick(ServerLevel level) {
         LevelData data = getLevelData(level);
+        currentTickDimension = level.dimension().location();
+        currentTickLevelData = data;
         if (data == null) return;
 
         // Update level stress status
@@ -168,13 +178,16 @@ public class TickScheduler {
         data.stats = previousStats;
         data.stats.reset();
 
+        Config config = Config.getInstance();
+        data.forcedChunks = config.optimizeForceLoadedChunks ? LongSets.EMPTY_SET : CommonClass.getForcedChunks(level);
+
         // Clear priorities every n seconds to avoid memory leaks
         if (tick % CLEAR_BLOCK_ENTITIES_INTERVAL == 0) {
             data.blockEntityPriorities.clear();
         }
 
         // Entity culling disabled
-        if (!Config.getInstance().enableEntities) {
+        if (!config.enableEntities) {
             data.priorities = new Int2IntOpenHashMap();
             return;
         }
@@ -185,7 +198,7 @@ public class TickScheduler {
         entities.values().forEach(entity -> {
             if (entity != null) {
                 int priority = getPriority(data, level, entity);
-                if (priority > 0) {
+                if (priority > 1) {
                     newPriorities.put(entity.getId(), priority);
                 }
 
@@ -199,10 +212,11 @@ public class TickScheduler {
     public boolean shouldTick(Entity entity) {
         if (entity.noCulling || INSTANCE == null) return true;
 
-        LevelData data = getLevelData(entity.level());
+        ResourceLocation dimension = entity.level().dimension().location();
+        LevelData data = dimension.equals(currentTickDimension) ? currentTickLevelData : levelData.get(dimension);
         if (data == null) return true;
 
-        int priority = data.priorities.getOrDefault(entity.getId(), 0);
+        int priority = data.priorities.get(entity.getId());
         if (priority <= 1) return true;
 
         return (data.tick + entity.getId()) % priority == 0;
@@ -212,11 +226,9 @@ public class TickScheduler {
         Config config = Config.getInstance();
 
         // Blacklist entities
-        ResourceLocation id = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
-        if (!config.entities.getOrDefault(id.toString(), true)) return 0;
-        if (!config.entities.getOrDefault(id.getNamespace(), true)) return 0;
+        if (config.isBlacklisted(entity.getType())) return 0;
         if (!config.cullProjectiles && entity instanceof Projectile) return 0;
-        if (isForceLoaded(level, entity.chunkPosition().toLong())) return 0;
+        if (data.forcedChunks.contains(entity.chunkPosition().toLong())) return 0;
 
         // Find the closest player
         double minDistance = 999999.0;
@@ -272,15 +284,11 @@ public class TickScheduler {
         if (data == null) {
             return true;
         }
-        if (isForceLoaded(level, pos)) {
+        if (data.forcedChunks.contains(pos)) {
             return true;
         }
         int priority = data.blockEntityPriorities.computeIfAbsent(pos, p -> this.getBlockEntityPriority(level, p));
         return priority < 1 || (level.getGameTime() + pos) % priority == 0;
-    }
-
-    private boolean isForceLoaded(Level level, long chunk) {
-        return !Config.getInstance().optimizeForceLoadedChunks && level instanceof ServerLevel serverLevel && CommonClass.isForceLoaded(serverLevel, chunk);
     }
 
     private int getBlockEntityPriority(Level level, long p) {
