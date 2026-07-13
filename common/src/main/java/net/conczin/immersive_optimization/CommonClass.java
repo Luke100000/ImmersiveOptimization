@@ -1,5 +1,7 @@
 package net.conczin.immersive_optimization;
 
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongSet;
 import net.minecraft.server.level.ServerLevel;
 
 public class CommonClass {
@@ -7,13 +9,13 @@ public class CommonClass {
         // No-op
     }
 
-    public static ForcedChunkLookup forcedChunkLookup = (level, chunk) -> level.getForceLoadedChunks().contains(chunk);
+    public static ForcedChunkLookup forcedChunkLookup = level -> new LongOpenHashSet(level.getForceLoadedChunks());
 
-    public static boolean isForceLoaded(ServerLevel level, long chunk) {
-        return forcedChunkLookup.isForced(level, chunk);
+    public static LongSet getForcedChunks(ServerLevel level) {
+        return forcedChunkLookup.getForcedChunks(level);
     }
 
     public interface ForcedChunkLookup {
-        boolean isForced(ServerLevel level, long chunk);
+        LongSet getForcedChunks(ServerLevel level);
     }
 }

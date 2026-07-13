@@ -1,3 +1,8 @@
+# 0.2.0
+
+* Added tags and * to blacklist
+* Improved performance
+
 # 0.1.6
 
 * Clean up after the server shuts down
