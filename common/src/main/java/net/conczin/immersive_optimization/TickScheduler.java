@@ -130,6 +130,10 @@ public class TickScheduler {
 
     public final Map<ResourceLocation, LevelData> levelData = new ConcurrentHashMap<>();
 
+    // Can be cached
+    private ResourceLocation currentTickDimension;
+    private LevelData currentTickLevelData;
+
     @Nullable
     public LevelData getLevelData(Level level) {
         return levelData.get(level.dimension().location());
@@ -137,11 +141,15 @@ public class TickScheduler {
 
     public void reset() {
         levelData.clear();
+        currentTickDimension = null;
+        currentTickLevelData = null;
         frustum = null;
     }
 
     public void startLevelTick(ServerLevel level) {
         LevelData data = getLevelData(level);
+        currentTickDimension = level.dimension().location();
+        currentTickLevelData = data;
         if (data == null) return;
 
         // Update level stress status
@@ -184,7 +192,7 @@ public class TickScheduler {
         entities.values().forEach(entity -> {
             if (entity != null) {
                 int priority = getPriority(data, level, entity);
-                if (priority > 0) {
+                if (priority > 1) {
                     newPriorities.put(entity.getId(), priority);
                 }
 
@@ -198,10 +206,11 @@ public class TickScheduler {
     public boolean shouldTick(Entity entity) {
         if (entity.noCulling || INSTANCE == null) return true;
 
-        LevelData data = getLevelData(entity.level());
+        ResourceLocation dimension = entity.level().dimension().location();
+        LevelData data = dimension.equals(currentTickDimension) ? currentTickLevelData : levelData.get(dimension);
         if (data == null) return true;
 
-        int priority = data.priorities.getOrDefault(entity.getId(), 0);
+        int priority = data.priorities.get(entity.getId());
         if (priority <= 1) return true;
 
         return (data.tick + entity.getId()) % priority == 0;

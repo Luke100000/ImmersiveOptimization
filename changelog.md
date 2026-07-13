@@ -1,3 +1,7 @@
+# 0.1.7
+
+* Improved performance
+
 # 0.1.6
 
 * Clean up after the server shuts down
