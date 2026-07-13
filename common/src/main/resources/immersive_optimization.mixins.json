@@ -9,7 +9,8 @@
     "LevelMixin",
     "MinecraftServerMixin",
     "ServerLevelAccessor",
-    "ServerLevelMixin"
+    "ServerLevelMixin",
+    "TicketStorageAccessor"
   ],
   "client": [
     "client.LevelRendererMixin"
@@ -20,4 +21,3 @@
     "defaultRequire": 1
   }
 }
-
