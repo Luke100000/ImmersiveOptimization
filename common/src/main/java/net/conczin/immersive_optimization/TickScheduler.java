@@ -2,6 +2,8 @@ package net.conczin.immersive_optimization;
 
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.longs.LongSet;
+import it.unimi.dsi.fastutil.longs.LongSets;
 import net.conczin.immersive_optimization.config.Config;
 import net.conczin.immersive_optimization.mixin.EntityTickListAccessor;
 import net.conczin.immersive_optimization.mixin.ServerLevelAccessor;
@@ -104,6 +106,7 @@ public class TickScheduler {
         public int lifeTimeStressedTicks = 0;
 
         public volatile Int2IntOpenHashMap priorities = new Int2IntOpenHashMap();
+        public volatile LongSet forcedChunks = LongSets.EMPTY_SET;
 
         public Map<Long, Integer> blockEntityPriorities = new ConcurrentHashMap<>();
 
@@ -175,13 +178,16 @@ public class TickScheduler {
         data.stats = previousStats;
         data.stats.reset();
 
+        Config config = Config.getInstance();
+        data.forcedChunks = config.optimizeForceLoadedChunks ? LongSets.EMPTY_SET : CommonClass.getForcedChunks(level);
+
         // Clear priorities every n seconds to avoid memory leaks
         if (tick % CLEAR_BLOCK_ENTITIES_INTERVAL == 0) {
             data.blockEntityPriorities.clear();
         }
 
         // Entity culling disabled
-        if (!Config.getInstance().enableEntities) {
+        if (!config.enableEntities) {
             data.priorities = new Int2IntOpenHashMap();
             return;
         }
@@ -223,7 +229,7 @@ public class TickScheduler {
         ResourceLocation id = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
         if (!config.entities.getOrDefault(id.toString(), true)) return 0;
         if (!config.entities.getOrDefault(id.getNamespace(), true)) return 0;
-        if (isForceLoaded(level, entity.chunkPosition().toLong())) return 0;
+        if (data.forcedChunks.contains(entity.chunkPosition().toLong())) return 0;
 
         // Find the closest player
         double minDistance = 999999.0;
@@ -279,15 +285,11 @@ public class TickScheduler {
         if (data == null) {
             return true;
         }
-        if (isForceLoaded(level, pos)) {
+        if (data.forcedChunks.contains(pos)) {
             return true;
         }
         int priority = data.blockEntityPriorities.computeIfAbsent(pos, p -> this.getBlockEntityPriority(level, p));
         return priority < 1 || (level.getGameTime() + pos) % priority == 0;
-    }
-
-    private boolean isForceLoaded(Level level, long chunk) {
-        return !Config.getInstance().optimizeForceLoadedChunks && level instanceof ServerLevel serverLevel && CommonClass.isForceLoaded(serverLevel, chunk);
     }
 
     private int getBlockEntityPriority(Level level, long p) {
