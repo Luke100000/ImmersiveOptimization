@@ -10,7 +10,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
+      MODRINTH_ID: ${{ secrets.MR_PROJECT_ID }}
       MODRINTH_TOKEN: ${{ secrets.MR_API_TOKEN }}
+      CURSEFORGE_ID: ${{ secrets.CF_PROJECT_ID }}
       CURSEFORGE_TOKEN: ${{ secrets.CF_API_TOKEN }}
     if: startsWith(github.ref, 'refs/tags/')
     steps:
@@ -36,12 +38,12 @@ jobs:
           separator: "+"
           msg: ${{steps.tag.outputs.tag}}
       - name: "Upload Fabric"
-        uses: Kir-Antipov/mc-publish@v3.3.0
+        uses: Kira-NT/mc-publish@v3.3.1
         if: ${{ success() && startsWith(github.ref, 'refs/tags/') }}
         with:
-          modrinth-id: vNZgQmjg
+          modrinth-id: ${{ env.MODRINTH_ID }}
           modrinth-token: ${{ env.MODRINTH_TOKEN }}
-          curseforge-id: 1163206
+          curseforge-id: ${{ env.CURSEFORGE_ID }}
           curseforge-token: ${{ env.CURSEFORGE_TOKEN }}
 
           name: "[Fabric ${{steps.split.outputs._1}}] Immersive Optimization - ${{steps.split.outputs._0}}"
@@ -50,6 +52,7 @@ jobs:
           files: "fabric/build/libs/immersive_optimization-fabric-${{steps.split.outputs._1}}-${{steps.split.outputs._0}}.jar"
           loaders: |
             fabric
+          environment: client | server
           game-versions: |
             ${{steps.split.outputs._1}}
           java: |
@@ -59,12 +62,12 @@ jobs:
 
           fail-mode: skip
       - name: "Upload Forge"
-        uses: Kir-Antipov/mc-publish@v3.3.0
+        uses: Kira-NT/mc-publish@v3.3.1
         if: ${{ success() && startsWith(github.ref, 'refs/tags/') }}
         with:
-          modrinth-id: vNZgQmjg
+          modrinth-id: ${{ env.MODRINTH_ID }}
           modrinth-token: ${{ env.MODRINTH_TOKEN }}
-          curseforge-id: 1163206
+          curseforge-id: ${{ env.CURSEFORGE_ID }}
           curseforge-token: ${{ env.CURSEFORGE_TOKEN }}
 
           name: "[Forge ${{steps.split.outputs._1}}] Immersive Optimization - ${{steps.split.outputs._0}}"
@@ -73,6 +76,7 @@ jobs:
           files: "forge/build/libs/immersive_optimization-forge-${{steps.split.outputs._1}}-${{steps.split.outputs._0}}.jar"
           loaders: |
             forge
+          environment: client | server
           game-versions: |
             ${{steps.split.outputs._1}}
           java: |
