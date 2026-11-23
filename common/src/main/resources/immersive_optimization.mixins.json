@@ -5,7 +5,7 @@
   "compatibilityLevel": "JAVA_25",
   "mixins": [
     "EntityTickListAccessor",
-    "LevelMixin",
+    "BoundTickingBlockEntityMixin",
     "MinecraftServerMixin",
     "ServerLevelAccessor",
     "ServerLevelMixin",
