@@ -61,6 +61,8 @@ public class Commands {
                         .then(toggle("enabledStress", enabled -> Config.getInstance().stressedThreshold = enabled ? (new Config()).stressedThreshold : 0))
                         .then(entityRule("blacklist", false))
                         .then(entityRule("whitelist", true))
+                        .then(blockEntityRule("blacklistBlockEntity", false))
+                        .then(blockEntityRule("whitelistBlockEntity", true))
                         .then(LiteralArgumentBuilder.<CommandSourceStack>literal("reload")
                                 .executes(context -> {
                                     Config.getInstance().reload();
@@ -98,12 +100,20 @@ public class Commands {
     }
 
     private static ArgumentBuilder<CommandSourceStack, ?> entityRule(String name, boolean enabled) {
+        return rule(name, enabled, Config::toggleEntityRule);
+    }
+
+    private static ArgumentBuilder<CommandSourceStack, ?> blockEntityRule(String name, boolean enabled) {
+        return rule(name, enabled, Config::toggleBlockEntityRule);
+    }
+
+    private static ArgumentBuilder<CommandSourceStack, ?> rule(String name, boolean enabled, RuleToggle toggle) {
         return LiteralArgumentBuilder.<CommandSourceStack>literal(name)
                 .then(RequiredArgumentBuilder.<CommandSourceStack, String>argument("id", StringArgumentType.greedyString())
                         .executes(context -> {
                             String id = StringArgumentType.getString(context, "id");
                             Config config = Config.getInstance();
-                            boolean added = config.toggleEntityRule(id, enabled);
+                            boolean added = toggle.toggle(config, id, enabled);
                             config.save();
                             send(context, added
                                     ? "Added %s to %s!".formatted(id, name)
@@ -111,6 +121,10 @@ public class Commands {
                             return 0;
                         })
                 );
+    }
+
+    private interface RuleToggle {
+        boolean toggle(Config config, String id, boolean enabled);
     }
 
     private static void send(CommandContext<CommandSourceStack> context, String message) {

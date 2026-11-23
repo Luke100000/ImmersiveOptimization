@@ -1,3 +1,7 @@
+# 0.3.0
+
+* Added block entity rules (`blockEntities` config, `/io config blacklistBlockEntity`)
+
 # 0.2.0
 
 * Added tags and * to blacklist
